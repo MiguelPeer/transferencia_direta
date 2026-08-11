@@ -42,17 +42,25 @@ function setProgress(receivedBytes, total) {
 }
 
 async function createRoom() {
-  const [res, iceServers] = await Promise.all([fetch("/api/rooms", { method: "POST" }), loadIceServers()]);
-  if (!res.ok) {
+  let res, iceServers, room, svg;
+  try {
+    [res, iceServers] = await Promise.all([fetch("/api/rooms", { method: "POST" }), loadIceServers()]);
+    if (!res.ok) {
+      statusText.textContent = "falha ao criar sala — recarregue a página";
+      dot.classList.add("off");
+      return;
+    }
+    room = await res.json();
+    const qrRes = await fetch(room.qrUrl);
+    svg = await qrRes.text();
+  } catch (err) {
     statusText.textContent = "falha ao criar sala — recarregue a página";
     dot.classList.add("off");
+    console.error("poeira: falha ao criar sala", err);
     return;
   }
-  const room = await res.json();
-  tokenLabel.textContent = room.token.slice(0, 8);
 
-  const qrRes = await fetch(room.qrUrl);
-  const svg = await qrRes.text();
+  tokenLabel.textContent = room.token.slice(0, 8);
   qrBox.innerHTML = svg;
   qrLabel.textContent = "aponte a câmera para conectar";
   eyebrowText.textContent = "aguardando celular";
@@ -184,4 +192,8 @@ async function createRoom() {
   });
 }
 
-createRoom();
+createRoom().catch((err) => {
+  statusText.textContent = "algo deu errado — recarregue a página";
+  dot.classList.add("off");
+  console.error("poeira: erro inesperado", err);
+});
