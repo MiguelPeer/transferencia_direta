@@ -1,4 +1,4 @@
-<title>poeira — plano do projeto</title>
+<title>transferência direta — plano do projeto</title>
 <style>
   :root{
     --bg: #1c1b1a;
@@ -274,24 +274,24 @@
 
   <header>
     <div class="eyebrow"><span class="dot"></span>documento de projeto · portfólio</div>
-    <h1>poeira</h1>
-    <p class="lede">Transferência de arquivo P2P efêmera entre celular e computador — sem banco de dados, sem cópia num servidor, sem sobrevida depois de entregue.</p>
+    <h1>transferência direta</h1>
+    <p class="lede">Transferência de arquivo P2P efêmera entre dois aparelhos quaisquer — celular↔celular, PC↔PC ou qualquer combinação — sem banco de dados, sem cópia num servidor, sem sobrevida depois de entregue.</p>
     <div class="header-meta">
-      <span class="meta-chip">etapa atual <strong>6 de 6</strong></span>
+      <span class="meta-chip">etapa atual <strong>7 de 7</strong></span>
       <span class="meta-chip">stack <strong>Node.js · WebRTC · vanilla JS</strong></span>
-      <span class="meta-chip">estado <strong>roadmap completo — testado na mesma rede</strong></span>
+      <span class="meta-chip">estado <strong>qualquer aparelho, qualquer papel — testado na mesma rede</strong></span>
     </div>
   </header>
 
   <section>
     <div class="section-head"><span class="section-num mono">01</span><h2>fluxo funcional</h2></div>
     <div class="flow">
-      <div class="flow-step" data-n="1"><h3>QR na tela do computador</h3><p>O computador abre a página e o servidor cria uma sala com token de sessão único — o QR aponta pra essa sala, não pra um link genérico.</p></div>
-      <div class="flow-step" data-n="2"><h3>Celular escaneia</h3><p>Abre a mesma sala direto no navegador do celular. Sem instalar app.</p></div>
-      <div class="flow-step" data-n="3"><h3>Upload vira transferência P2P</h3><p>O arquivo sai do celular direto pro computador via WebRTC — o meu servidor nunca recebe o arquivo, só ajudou os dois peers a se encontrarem.</p></div>
-      <div class="flow-step" data-n="4"><h3>Redes diferentes? STUN + TURN</h3><p>Se não há caminho direto (ex: computador em rede corporativa), um relay TURN repassa os bytes sem gravá-los em nenhum momento.</p></div>
+      <div class="flow-step" data-n="1"><h3>Escolhe o papel</h3><p>Quem abre a página escolhe explicitamente: enviar daqui ou receber aqui. O servidor cria uma sala com token de sessão único e grava esse papel.</p></div>
+      <div class="flow-step" data-n="2"><h3>QR e código, sempre juntos</h3><p>A sala aberta mostra QR e um código de 6 caracteres ao mesmo tempo — a mesma sala, duas formas de entrar. Quem tem câmera escaneia (com o app do sistema ou lendo direto na página); quem não tem, digita o código no outro aparelho. Quem entra herda o papel invertido automaticamente.</p></div>
+      <div class="flow-step" data-n="3"><h3>Upload vira transferência P2P</h3><p>O arquivo sai de um aparelho direto pro outro via WebRTC — o meu servidor nunca recebe o arquivo, só ajudou os dois peers a se encontrarem.</p></div>
+      <div class="flow-step" data-n="4"><h3>Redes diferentes? STUN + TURN</h3><p>Se não há caminho direto (ex: um dos dois numa rede corporativa), um relay TURN repassa os bytes sem gravá-los em nenhum momento.</p></div>
       <div class="flow-step" data-n="5"><h3>Chega original</h3><p>Sem recompressão, sem perda de EXIF — o diferencial em relação a soluções tipo WhatsApp Web.</p></div>
-      <div class="flow-step" data-n="6"><h3>Destruir agora</h3><p>Confirmado o download, um clique dispara a dissolução em partículas — e descarta a sessão de verdade, não só visualmente.</p></div>
+      <div class="flow-step" data-n="6"><h3>Destruir agora</h3><p>Confirmado o recebimento, um clique dispara a dissolução em partículas — e descarta a sessão de verdade, não só visualmente.</p></div>
     </div>
   </section>
 
@@ -301,7 +301,7 @@
 
     <figure>
       <div class="diagram-wrap">
-        <svg viewBox="0 0 720 300" role="img" aria-label="Celular e computador trocam apenas metadado de conexão (SDP/ICE) com o servidor de sinalização; o arquivo em si viaja direto entre os dois via RTCDataChannel P2P, ou, quando isso falha, por um relay TURN que repassa bytes sem gravá-los.">
+        <svg viewBox="0 0 720 300" role="img" aria-label="Os dois aparelhos trocam apenas metadado de conexão (SDP/ICE) com o servidor de sinalização; o arquivo em si viaja direto entre os dois via RTCDataChannel P2P, ou, quando isso falha, por um relay TURN que repassa bytes sem gravá-los.">
           <defs>
             <marker id="arrow-dust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
               <path d="M0,0 L10,5 L0,10 z" fill="#5b7c99"/>
@@ -313,12 +313,12 @@
 
           <!-- nodes -->
           <rect x="20" y="130" width="130" height="56" rx="3" fill="#232220" stroke="#35332f"/>
-          <text x="85" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">celular</text>
-          <text x="85" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">origin</text>
+          <text x="85" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">aparelho A</text>
+          <text x="85" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">origin · quem envia</text>
 
           <rect x="570" y="130" width="130" height="56" rx="3" fill="#232220" stroke="#35332f"/>
-          <text x="635" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">computador</text>
-          <text x="635" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">dest</text>
+          <text x="635" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">aparelho B</text>
+          <text x="635" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">dest · quem recebe</text>
 
           <rect x="285" y="18" width="150" height="52" rx="3" fill="#232220" stroke="#3d5266" stroke-width="1.2"/>
           <text x="360" y="40" text-anchor="middle" fill="#edeae4" font-size="12" font-weight="600">servidor de</text>
@@ -380,6 +380,11 @@
         <span class="rt">Polimento visual final<span>transições entre telas, zona de seleção de arquivo</span></span>
         <span class="status done">concluído</span>
       </div>
+      <div class="roadmap-row">
+        <span class="rn mono">07</span>
+        <span class="rt">Papel explícito + entrada por código<span>qualquer aparelho envia ou recebe; QR, código digitado ou lido pela câmera do navegador</span></span>
+        <span class="status done">concluído</span>
+      </div>
     </div>
   </section>
 
@@ -387,14 +392,13 @@
     <div class="section-head"><span class="section-num mono">04</span><h2>estrutura do repositório</h2></div>
     <pre><strong>server/</strong>           servidor de sinalização (Node.js, sem framework)
   src/
-    index.js       HTTP + WS entrypoint · rotas de sala/QR/TURN
-    rooms.js        RoomManager — estado em memória, TTL, destruição
+    index.js       HTTP + WS entrypoint · rotas de sala/QR/código/TURN
+    rooms.js        RoomManager — estado em memória, TTL, código curto, destruição
     signaling.js     relay de SDP/ICE entre os dois peers
     security.js      origin check · rate limiter · validação de mensagem
     turn.js          credenciais TURN efêmeras <em>(etapa 4)</em>
-<strong>web/</strong>              front-end estático (vanilla JS/HTML/CSS)
-  index.html        página do computador (gera sala + QR)
-  room.html         página do celular (entra pela URL /r/&lt;token&gt;)
+<strong>web/</strong>              front-end estático (vanilla JS/HTML/CSS), pagina unica
+  index.html        as 5 telas: intenção, sala aberta, código, scanner, transferência
   assets/
     styles.css        identidade visual
     signaling-client.js  cliente WS fino
@@ -402,9 +406,11 @@
     file-transfer.js     chunking + hash SHA-256 + reconstrucao do arquivo <em>(etapa 3)</em>
     ice-config.js         busca credenciais TURN em /api/turn-credentials <em>(etapa 4)</em>
     dissolve.js           particulas aplicadas ao preview real <em>(etapa 5)</em>
-    panels.js             fade sequencial entre telas <em>(etapa 6)</em>
-    index-page.js, room-page.js   logica de cada pagina (script externo — CSP nao permite inline)
+    qr-scan.js             leitura de QR pela camera do navegador <em>(etapa 7)</em>
+    vendor/jsqr.js          jsQR vendorizado localmente, sem CDN
+    app.js                 orquestra telas, papeis e a conexao <em>(etapa 7)</em>
 <strong>preview.html</strong>      protótipo do efeito de partículas <em>(referência)</em>
+<strong>transferencia.html</strong>  protótipo da tela de conexão atual <em>(referência)</em>
 <strong>SECURITY.md</strong>       modelo de ameaças e decisões de segurança</pre>
   </section>
 
@@ -419,6 +425,7 @@
         <li><strong>Credenciais TURN efêmeras (HMAC, 5min)</strong> em vez de secret estático exposto no cliente.</li>
         <li><strong>Hash SHA-256 fim a fim</strong> — calculado na origem antes do envio, recalculado no destino após reconstruir o arquivo; se não bater, o download é recusado.</li>
         <li><strong>"Destruir agora" descarta de verdade</strong> — dispara a dissolução em partículas e manda destruir a sala no servidor; o `Blob` local é liberado da memória do navegador.</li>
+        <li><strong>Código de sala é chave de busca, não identificador</strong> — o QR carrega o token forte de 128 bits; o código de 6 caracteres (ditável, sem 0/O/1/I) só resolve pro mesmo token no servidor, com rate limit dedicado.</li>
       </ul>
       <div class="callout-ref">detalhamento completo → SECURITY.md</div>
     </div>
@@ -434,7 +441,8 @@
           <tr><td>Estado de sala</td><td>Map em memória</td><td>vida curta por natureza; sem persistência não há o que vazar</td></tr>
           <tr><td>Transporte de arquivo</td><td>RTCDataChannel</td><td>P2P nativo do navegador, DTLS obrigatório</td></tr>
           <tr><td>Descoberta de rede</td><td>STUN público + TURN efêmero</td><td>cobre o caso comum (mesma rede) e o caso difícil (redes distintas)</td></tr>
-          <tr><td>QR code</td><td>qrcode (server-side, SVG)</td><td>sem dependência client-side, sem CDN de terceiro na página</td></tr>
+          <tr><td>QR code (geração)</td><td>qrcode (server-side, SVG)</td><td>sem dependência client-side, sem CDN de terceiro na página</td></tr>
+          <tr><td>QR code (leitura)</td><td>BarcodeDetector nativo + jsQR</td><td>jsQR vendorizado localmente cobre navegadores sem BarcodeDetector (ex: Safari/iOS)</td></tr>
           <tr><td>Front-end</td><td>HTML/CSS/JS vanilla</td><td>sem build step — o efeito de partículas já existe assim no protótipo</td></tr>
         </tbody>
       </table>
@@ -442,7 +450,7 @@
   </section>
 
   <footer>
-    <span>poeira · documento de plano</span>
+    <span>transferência direta · documento de plano</span>
     <span>gerado a partir do estado atual do repositório · sem persistência de dados de usuário</span>
   </footer>
 

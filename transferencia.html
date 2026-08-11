@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>transferência direta</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wdth,wght@12..96,75..100,400..800&family=DM+Mono:wght@400;500&family=Instrument+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A100F; --panel:#0F1719; --panel-2:#131E20;
+    --line:#1D292C; --line-2:#2A3A3D;
+    --text:#E8EFEC; --muted:#7C8F8D;
+    --amber:#E8A33B; --mint:#5FD3AB; --red:#E3644A;
+    --r:14px;
+    --mono:"DM Mono",ui-monospace,Menlo,monospace;
+    --body:"Instrument Sans",system-ui,-apple-system,Segoe UI,sans-serif;
+    --display:"Bricolage Grotesque","Instrument Sans",system-ui,sans-serif;
+  }
+  *{box-sizing:border-box}
+  body{
+    margin:0;min-height:100vh;
+    background:radial-gradient(1100px 600px at 50% -10%,#12201F 0%,transparent 60%),var(--bg);
+    color:var(--text);font-family:var(--body);-webkit-font-smoothing:antialiased;
+    display:flex;align-items:center;justify-content:center;padding:32px 20px;
+  }
+  .shell{width:100%;max-width:660px}
+
+  .top{display:flex;align-items:baseline;justify-content:space-between;gap:16px;margin-bottom:24px}
+  .wordmark{font-family:var(--display);font-variation-settings:"wdth" 82;font-weight:700;font-size:19px;letter-spacing:-.02em;margin:0}
+  .wordmark span{color:var(--amber)}
+  .nosrv{font-family:var(--mono);font-size:10.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted);white-space:nowrap}
+
+  /* diagrama */
+  .diagram{background:linear-gradient(180deg,var(--panel-2),var(--panel));border:1px solid var(--line);border-bottom:none;border-radius:var(--r) var(--r) 0 0;padding:22px 20px 6px}
+  .diagram svg{display:block;width:100%;height:auto}
+  .port-box{fill:#0C1415;stroke:var(--line-2)}
+  .port-label{font-family:var(--mono);font-size:9.5px;letter-spacing:.16em;fill:var(--muted);text-transform:uppercase}
+  .port-name{font-family:var(--body);font-size:13px;font-weight:600;fill:var(--text)}
+  .jack-ring{fill:none;stroke:var(--line-2);stroke-width:1.5}
+  .jack-core{fill:var(--muted);transition:fill .35s}
+  .live .jack-core{fill:var(--mint)}
+  #cable{fill:none;stroke:var(--amber);stroke-width:2.4;stroke-linecap:round;transition:stroke .5s}
+  .live #cable{stroke:var(--mint)}
+  #pulse{opacity:0}
+
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:0 0 var(--r) var(--r);overflow:hidden}
+  .body{padding:24px 22px}
+  .eyebrow{font-family:var(--mono);font-size:10px;letter-spacing:.16em;text-transform:uppercase;color:var(--muted);margin:0 0 12px}
+
+  /* ---- tela 1: escolha ---- */
+  .intent{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .big{
+    appearance:none;cursor:pointer;text-align:left;
+    background:#0C1415;border:1px solid var(--line-2);border-radius:12px;
+    padding:20px 18px;color:var(--text);font-family:var(--body);
+    transition:border-color .2s,background .2s,transform .15s;
+  }
+  .big:hover{border-color:var(--amber);background:#101A19;transform:translateY(-1px)}
+  .big:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .big strong{display:block;font-size:15.5px;font-weight:600;margin-bottom:5px}
+  .big small{font-size:12.5px;color:var(--muted);line-height:1.5;display:block}
+  .arrow{display:block;margin-bottom:14px;color:var(--amber);font-family:var(--mono);font-size:15px;letter-spacing:.05em}
+
+  .sep{display:flex;align-items:center;gap:14px;margin:24px 0 18px}
+  .sep::before,.sep::after{content:"";height:1px;background:var(--line);flex:1}
+  .sep span{font-family:var(--mono);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted)}
+
+  /* ---- sala aberta: QR + código lado a lado ---- */
+  .join{display:grid;grid-template-columns:auto 1fr;gap:22px;align-items:center}
+  .qrcard{background:#EDEFEA;border-radius:12px;padding:10px;line-height:0}
+  .qrcard canvas{width:168px;height:168px;display:block}
+  .joinside strong{display:block;font-size:15px;font-weight:600;margin-bottom:4px}
+  .joinside p{margin:0 0 14px;font-size:13px;color:var(--muted);line-height:1.6}
+  .code-shell{display:flex;gap:10px;flex-wrap:wrap}
+  .code{
+    flex:1 1 160px;min-width:0;border:1px solid var(--line-2);border-radius:10px;background:#0C1415;
+    padding:12px 16px;font-family:var(--mono);font-weight:500;font-size:24px;letter-spacing:.22em;
+    color:var(--amber);user-select:all;
+  }
+
+  .btn{appearance:none;cursor:pointer;border-radius:10px;font-family:var(--body);font-size:13.5px;font-weight:600;padding:0 18px;transition:background .18s,border-color .18s,color .18s}
+  .btn:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .btn-ghost{background:transparent;border:1px solid var(--line-2);color:var(--text)}
+  .btn-ghost:hover{border-color:var(--muted);background:#121C1E}
+  .btn-solid{background:var(--amber);border:1px solid var(--amber);color:#10161A}
+  .btn-solid:hover{background:#F2B152}
+  .btn-solid:disabled{background:#1A2426;border-color:#1A2426;color:#5B6C6A;cursor:not-allowed}
+  .row{display:flex;gap:10px;margin-top:16px;flex-wrap:wrap}
+  .row .btn{padding:13px 18px}
+
+  /* arquivo */
+  .drop{border:1px dashed var(--line-2);border-radius:10px;background:#0C1415;padding:20px;text-align:center;cursor:pointer;transition:border-color .2s,background .2s;margin-bottom:18px}
+  .drop:hover,.drop.over{border-color:var(--amber);background:#101A19}
+  .drop:focus-visible{outline:2px solid var(--mint);outline-offset:2px}
+  .drop p{margin:0;font-size:14px}
+  .drop small{display:block;margin-top:6px;font-family:var(--mono);font-size:10.5px;letter-spacing:.08em;color:var(--muted)}
+  .file-row{display:flex;align-items:center;gap:12px;border:1px solid var(--line-2);border-radius:10px;background:#0C1415;padding:13px 16px;margin-bottom:18px}
+  .file-glyph{width:30px;height:30px;border-radius:7px;background:#16241F;display:grid;place-items:center;flex:0 0 auto}
+  .file-glyph i{display:block;width:11px;height:14px;border:1.5px solid var(--mint);border-radius:2px}
+  .file-meta{min-width:0;flex:1}
+  .file-meta strong{display:block;font-size:13.5px;font-weight:600;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .file-meta span{font-family:var(--mono);font-size:10.5px;color:var(--muted);letter-spacing:.06em}
+  .file-x{background:none;border:0;color:var(--muted);cursor:pointer;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;padding:6px}
+  .file-x:hover{color:var(--red)}
+
+  /* slots do código */
+  .slots{display:flex;gap:8px}
+  .slots input{
+    width:100%;min-width:0;aspect-ratio:3/4;max-height:64px;background:#0C1415;
+    border:1px solid var(--line-2);border-radius:10px;color:var(--text);
+    font-family:var(--mono);font-size:22px;font-weight:500;text-align:center;text-transform:uppercase;padding:0;
+    transition:border-color .15s,background .15s;
+  }
+  .slots input:focus{outline:none;border-color:var(--amber);background:#101A19}
+  .slots.err input{border-color:var(--red)}
+
+  /* scanner */
+  #scan{width:100%;border-radius:12px;background:#000;display:block;aspect-ratio:4/3;object-fit:cover}
+  .scanwrap{position:relative}
+  .reticle{position:absolute;inset:16%;border:1.5px solid var(--mint);border-radius:14px;box-shadow:0 0 0 100vmax rgba(10,16,15,.55);pointer-events:none}
+
+  .hint{margin:14px 0 0;font-size:13px;color:var(--muted);line-height:1.6}
+  .hint.error{color:var(--red)}
+  .back{background:none;border:0;padding:0;margin-bottom:16px;cursor:pointer;font-family:var(--mono);font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted)}
+  .back:hover{color:var(--text)}
+
+  .bar{height:3px;background:#16211F;border-radius:2px;overflow:hidden;margin-top:16px}
+  .bar i{display:block;height:100%;width:0;background:var(--mint);transition:width .25s linear}
+  .stage{position:relative}
+  .stage canvas.dust{position:absolute;inset:0;width:100%;height:100%;pointer-events:none}
+  .fade-out{opacity:0;transition:opacity .5s}
+
+  .status{display:flex;align-items:center;justify-content:space-between;gap:14px;border-top:1px solid var(--line);padding:14px 22px;font-family:var(--mono);font-size:11px;letter-spacing:.09em;color:var(--muted)}
+  .dot{width:6px;height:6px;border-radius:50%;background:var(--muted);display:inline-block;margin-right:9px;vertical-align:1px}
+  .dot.wait{background:var(--amber);animation:blink 1.6s ease-in-out infinite}
+  .dot.on{background:var(--mint)}
+  @keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+  .toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,14px);background:#16211F;border:1px solid var(--line-2);border-radius:9px;padding:10px 16px;font-family:var(--mono);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s}
+  .toast.show{opacity:1;transform:translate(-50%,0)}
+  .hide{display:none !important}
+
+  @media (max-width:600px){
+    .intent{grid-template-columns:1fr}
+    .join{grid-template-columns:1fr;justify-items:center;text-align:center}
+    .joinside{width:100%}
+    .code{font-size:21px;letter-spacing:.18em;text-align:center}
+    .code-shell{justify-content:center}
+  }
+  @media (prefers-reduced-motion:reduce){*{animation:none !important;transition-duration:.01ms !important}}
+</style>
+</head>
+<body>
+<main class="shell">
+
+  <div class="top">
+    <h1 class="wordmark">transferência <span>direta</span></h1>
+    <span class="nosrv">ponta a ponta &middot; nada fica em servidor</span>
+  </div>
+
+  <div class="diagram" id="diagram">
+    <svg viewBox="0 0 600 128" role="img" aria-labelledby="dt">
+      <title id="dt">Ligação entre este dispositivo e o outro</title>
+      <rect class="port-box" x="8" y="30" width="168" height="68" rx="10" stroke-width="1"/>
+      <text class="port-label" x="26" y="55">este lado</text>
+      <text class="port-name" id="portA" x="26" y="76">parado</text>
+      <circle class="jack-ring" cx="176" cy="64" r="9"/><circle class="jack-core" cx="176" cy="64" r="3.5"/>
+      <rect class="port-box" x="424" y="30" width="168" height="68" rx="10" stroke-width="1"/>
+      <text class="port-label" x="442" y="55">outro lado</text>
+      <text class="port-name" id="portB" x="442" y="76">não conectado</text>
+      <circle class="jack-ring" cx="424" cy="64" r="9"/><circle class="jack-core" cx="424" cy="64" r="3.5"/>
+      <path id="cable" d="M 185 64 Q 305 106 415 64"/>
+      <circle id="pulse" r="3.5" fill="#5FD3AB"/>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="body">
+
+      <!-- ============ TELA 1 ============ -->
+      <section id="s1">
+        <p class="eyebrow">o que você quer fazer neste aparelho</p>
+        <div class="intent">
+          <button class="big" id="goSend">
+            <span class="arrow">&rarr;</span>
+            <strong>Enviar daqui</strong>
+            <small>Escolho o arquivo e abro a sala. O outro aparelho entra.</small>
+          </button>
+          <button class="big" id="goRecv">
+            <span class="arrow">&larr;</span>
+            <strong>Receber aqui</strong>
+            <small>Abro a sala e espero. O outro aparelho manda o arquivo.</small>
+          </button>
+        </div>
+
+        <div class="sep"><span>o outro aparelho já abriu a sala?</span></div>
+
+        <div class="row" style="margin-top:0">
+          <button class="btn btn-ghost" id="goScan">Escanear o QR</button>
+          <button class="btn btn-ghost" id="goCode">Entrar com o código</button>
+        </div>
+        <p class="hint" id="s1hint">O QR e o código levam para a mesma sala — use o que o seu aparelho permitir.</p>
+      </section>
+
+      <!-- ============ TELA 2: sala aberta ============ -->
+      <section id="s2" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+
+        <div id="sendFile">
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivo">
+            <p>Arraste o arquivo aqui ou clique para escolher</p>
+            <small>vai inteiro, do jeito que saiu da câmera</small>
+          </div>
+          <input type="file" id="fileInput" class="hide">
+          <div class="file-row hide" id="fileRow">
+            <span class="file-glyph"><i></i></span>
+            <span class="file-meta"><strong id="fileName">—</strong><span id="fileSize">—</span></span>
+            <button class="file-x" id="fileClear">trocar</button>
+          </div>
+        </div>
+
+        <div id="roomBox" class="hide">
+          <p class="eyebrow" id="roomEyebrow">a sala está aberta &middot; leve para o outro aparelho</p>
+          <div class="join">
+            <div class="qrcard"><canvas id="qr" width="336" height="336" aria-label="QR code da sala"></canvas></div>
+            <div class="joinside">
+              <strong>Tem câmera? Aponte.</strong>
+              <p>Abra a câmera do celular no QR. Sem câmera, digite o código no outro aparelho.</p>
+              <div class="code-shell">
+                <div class="code" id="codeOut">— — — — — —</div>
+                <button class="btn btn-ghost" id="btnCopy">Copiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TELA 3: entrar com código ============ -->
+      <section id="s3" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+        <p class="eyebrow">código de seis caracteres</p>
+        <div class="slots" id="slots">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 1">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 2">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 3">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 4">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 5">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 6">
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost" id="btnPaste">Colar</button>
+          <button class="btn btn-solid" id="btnConnect" disabled>Entrar na sala</button>
+        </div>
+        <p class="hint" id="s3hint">O código aparece na tela de quem abriu a sala. Vale por 10 minutos.</p>
+      </section>
+
+      <!-- ============ TELA 4: scanner ============ -->
+      <section id="s4" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+        <div class="scanwrap">
+          <video id="scan" playsinline muted></video>
+          <span class="reticle"></span>
+        </div>
+        <p class="hint" id="s4hint">Aponte para o QR da outra tela.</p>
+      </section>
+
+      <!-- ============ TELA 5: transferência ============ -->
+      <section id="s5" class="hide">
+        <div class="stage" id="stage">
+          <div class="file-row" id="moveRow" style="margin-bottom:0">
+            <span class="file-glyph"><i></i></span>
+            <span class="file-meta"><strong id="moveName">—</strong><span id="moveSize">—</span></span>
+            <span class="file-x" id="movePct" style="color:var(--mint)">0%</span>
+          </div>
+          <div class="bar"><i id="barFill"></i></div>
+          <canvas class="dust hide" id="dust"></canvas>
+        </div>
+        <div class="row hide" id="doneRow">
+          <button class="btn btn-ghost" id="btnDestroy">Destruir</button>
+          <button class="btn btn-solid" id="btnAgain">Nova transferência</button>
+        </div>
+        <p class="hint" id="moveHint">Os dados vão direto de um aparelho para o outro.</p>
+      </section>
+
+    </div>
+
+    <div class="status">
+      <span><span class="dot" id="dot"></span><span id="statusText">nenhuma sala</span></span>
+      <span id="timer">—</span>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">código copiado</div>
+
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const ALPHABET = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sem 0 O 1 I
+  const BASE = location.origin + location.pathname;
+  let room = null, intent = null, file = null, timerId = null, stream = null;
+
+  /* ---------- cabo ---------- */
+  const cable = $('cable'), pulse = $('pulse'), diagram = $('diagram');
+  let sag = 42, target = 42, t = 0;
+  (function loop(){
+    t += .02; sag += (target - sag) * .08;
+    const s = sag + (reduce ? 0 : Math.sin(t) * (target > 4 ? 3 : 0));
+    cable.setAttribute('d', `M 185 64 Q 300 ${64 + s} 415 64`);
+    if (diagram.classList.contains('live')) {
+      const p = (Date.now() % 1600) / 1600;
+      const pt = cable.getPointAtLength(cable.getTotalLength() * p);
+      pulse.setAttribute('cx', pt.x); pulse.setAttribute('cy', pt.y);
+      pulse.style.opacity = Math.sin(p * Math.PI);
+    } else pulse.style.opacity = 0;
+    requestAnimationFrame(loop);
+  })();
+  const setLive = on => { diagram.classList.toggle('live', on); target = on ? 2 : 42; };
+  const ports = (a,b) => { $('portA').textContent = a; $('portB').textContent = b; };
+  const status = (txt,mode) => { $('statusText').textContent = txt; $('dot').className = 'dot' + (mode ? ' ' + mode : ''); };
+  const toast = m => { const e=$('toast'); e.textContent=m; e.classList.add('show'); setTimeout(()=>e.classList.remove('show'),1800); };
+  const human = b => b < 1024 ? b+' B' : b < 1048576 ? (b/1024).toFixed(1)+' KB' : (b/1048576).toFixed(1)+' MB';
+
+  function show(id){
+    ['s1','s2','s3','s4','s5'].forEach(s => $(s).classList.toggle('hide', s !== id));
+    if (id !== 's4') stopCam();
+  }
+  document.querySelectorAll('[data-back]').forEach(b => b.onclick = () => location.reload());
+
+  function startTimer(){
+    const ends = Date.now() + 600000;
+    clearInterval(timerId);
+    timerId = setInterval(() => {
+      const left = Math.max(0, ends - Date.now());
+      const m = Math.floor(left/60000), s = Math.floor(left%60000/1000);
+      $('timer').textContent = left ? `expira em ${m}:${String(s).padStart(2,'0')}` : 'código expirado';
+      if (!left) clearInterval(timerId);
+    }, 1000);
+  }
+
+  /* ---------- QR (placeholder — troque pela sua lib e codifique o link) ---------- */
+  function paintQR(text){
+    const c = $('qr'), g = c.getContext('2d'), N = 33, cell = c.width/N;
+    let h = 7; for (const ch of text) h = (h*31 + ch.charCodeAt(0)) >>> 0;
+    const rnd = () => ((h = (h*1664525 + 1013904223) >>> 0) / 4294967296);
+    g.fillStyle = '#EDEFEA'; g.fillRect(0,0,c.width,c.height);
+    for (let y=0;y<N;y++) for (let x=0;x<N;x++){
+      const inF = (x<8&&y<8)||(x>N-9&&y<8)||(x<8&&y>N-9);
+      if (!inF && rnd() > .52){ g.fillStyle='#0A100F'; g.fillRect(x*cell,y*cell,cell,cell); }
+    }
+    const finder = (x,y) => {
+      g.fillStyle='#0A100F'; g.fillRect(x*cell,y*cell,7*cell,7*cell);
+      g.fillStyle='#EDEFEA'; g.fillRect((x+1)*cell,(y+1)*cell,5*cell,5*cell);
+      g.fillStyle='#0A100F'; g.fillRect((x+2)*cell,(y+2)*cell,3*cell,3*cell);
+    };
+    finder(0,0); finder(N-7,0); finder(0,N-7);
+  }
+
+  /* ---------- abrir sala ---------- */
+  function openRoom(kind){
+    intent = kind;
+    show('s2');
+    $('sendFile').classList.toggle('hide', kind !== 'send');
+    if (kind === 'send') {
+      $('roomBox').classList.add('hide');
+      ports('este aparelho envia', 'esperando alguém');
+      status('escolha um arquivo para abrir a sala');
+      $('timer').textContent = '—';
+    } else {
+      publish();
+      ports('este aparelho recebe', 'esperando alguém');
+      $('roomEyebrow').textContent = 'a sala está aberta · quem tem o arquivo entra por aqui';
+    }
+  }
+  function publish(){
+    room = Array.from({length:6}, () => ALPHABET[Math.floor(Math.random()*ALPHABET.length)]).join('');
+    $('codeOut').textContent = room.split('').join(' ');
+    paintQR(`${BASE}#sala=${room}&papel=${intent === 'send' ? 'receber' : 'enviar'}`);
+    $('roomBox').classList.remove('hide');
+    startTimer();
+    status('sala aberta — esperando o outro lado', 'wait');
+  }
+  $('goSend').onclick = () => openRoom('send');
+  $('goRecv').onclick = () => openRoom('recv');
+
+  /* ---------- arquivo ---------- */
+  const drop = $('drop'), fileInput = $('fileInput');
+  drop.onclick = () => fileInput.click();
+  drop.onkeydown = e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); fileInput.click(); } };
+  ['dragenter','dragover'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.add('over'); }));
+  ['dragleave','drop'].forEach(ev => drop.addEventListener(ev, e => { e.preventDefault(); drop.classList.remove('over'); }));
+  drop.addEventListener('drop', e => e.dataTransfer.files[0] && takeFile(e.dataTransfer.files[0]));
+  fileInput.onchange = e => e.target.files[0] && takeFile(e.target.files[0]);
+
+  function takeFile(f){
+    file = f;
+    $('fileName').textContent = f.name;
+    $('fileSize').textContent = human(f.size) + ' · original preservado';
+    drop.classList.add('hide'); $('fileRow').classList.remove('hide');
+    publish();
+  }
+  $('fileClear').onclick = () => {
+    file = null; room = null; fileInput.value = '';
+    $('fileRow').classList.add('hide'); drop.classList.remove('hide');
+    $('roomBox').classList.add('hide'); clearInterval(timerId);
+    $('timer').textContent = '—';
+    status('escolha um arquivo para abrir a sala');
+  };
+  $('btnCopy').onclick = async () => {
+    if (!room) return;
+    try { await navigator.clipboard.writeText(room); toast('código copiado'); }
+    catch { toast('copie manualmente: ' + room); }
+  };
+
+  /* ---------- entrar com código ---------- */
+  const slots = Array.from($('slots').querySelectorAll('input'));
+  const typed = () => slots.map(i => i.value).join('').toUpperCase();
+  const refresh = () => { $('btnConnect').disabled = typed().length !== 6; $('slots').classList.remove('err'); };
+
+  slots.forEach((inp,i) => {
+    inp.addEventListener('input', () => {
+      inp.value = inp.value.replace(/[^a-zA-Z0-9]/g,'').toUpperCase();
+      if (inp.value && i < 5) slots[i+1].focus();
+      refresh();
+    });
+    inp.addEventListener('keydown', e => {
+      if (e.key === 'Backspace' && !inp.value && i) slots[i-1].focus();
+      if (e.key === 'ArrowLeft' && i) slots[i-1].focus();
+      if (e.key === 'ArrowRight' && i < 5) slots[i+1].focus();
+      if (e.key === 'Enter' && !$('btnConnect').disabled) join(typed());
+    });
+    inp.addEventListener('paste', e => { e.preventDefault(); fill(e.clipboardData.getData('text') || ''); });
+  });
+  function fill(raw){
+    const c = raw.replace(/[^a-zA-Z0-9]/g,'').toUpperCase().slice(0,6).split('');
+    slots.forEach((s,i) => s.value = c[i] || '');
+    refresh(); slots[Math.min(c.length,5)].focus();
+  }
+  $('goCode').onclick = () => { show('s3'); slots[0].focus(); status('digite o código'); };
+  $('btnPaste').onclick = async () => {
+    try { fill(await navigator.clipboard.readText()); }
+    catch { $('s3hint').textContent = 'O navegador bloqueou a área de transferência. Digite o código.'; slots[0].focus(); }
+  };
+  $('btnConnect').onclick = () => join(typed());
+
+  /* ---------- scanner ---------- */
+  async function hasCam(){
+    if (!navigator.mediaDevices?.enumerateDevices) return false;
+    try { return (await navigator.mediaDevices.enumerateDevices()).some(d => d.kind === 'videoinput'); }
+    catch { return false; }
+  }
+  function stopCam(){ stream?.getTracks().forEach(t => t.stop()); stream = null; }
+
+  $('goScan').onclick = async () => {
+    show('s4'); status('procurando o QR', 'wait');
+    try {
+      stream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: 'environment' } });
+      $('scan').srcObject = stream; await $('scan').play();
+    } catch {
+      $('s4hint').innerHTML = 'Este aparelho não liberou a câmera. <b>Use o código</b> em vez do QR.';
+      status('sem câmera disponível');
+      return;
+    }
+    if (!('BarcodeDetector' in window)) {
+      $('s4hint').innerHTML = 'Este navegador não lê QR sozinho — plugue aqui sua lib de leitura.';
+      return;
+    }
+    const det = new BarcodeDetector({ formats: ['qr_code'] });
+    const tick = async () => {
+      if (!stream) return;
+      try {
+        const [hit] = await det.detect($('scan'));
+        if (hit) { const m = hit.rawValue.match(/sala=([A-Z0-9]{6})/i); return join(m ? m[1] : hit.rawValue); }
+      } catch {}
+      requestAnimationFrame(tick);
+    };
+    tick();
+  };
+
+  /* ---------- entrar ---------- */
+  function join(code){
+    stopCam();
+    status('procurando a sala ' + code + '…', 'wait');
+    setTimeout(() => {                     // troque pelo handshake WebRTC real
+      setLive(true); startTimer(); show('s5');
+      ports('este aparelho recebe', 'conectado');
+      status('linha aberta — recebendo', 'on');
+      $('moveName').textContent = 'IMG_4820.HEIC';
+      $('moveSize').textContent = '4.2 MB · original preservado';
+      move();
+    }, 900);
+  }
+  function move(){
+    let p = 0;
+    const it = setInterval(() => {
+      p = Math.min(100, p + Math.random()*9 + 3);
+      $('barFill').style.width = p + '%';
+      $('movePct').textContent = Math.floor(p) + '%';
+      if (p >= 100) {
+        clearInterval(it);
+        status('arquivo recebido', 'on');
+        $('movePct').textContent = 'pronto';
+        $('moveHint').textContent = 'Chegou inteiro. Destrua quando não precisar mais — some dos dois lados.';
+        $('doneRow').classList.remove('hide');
+      }
+    }, 260);
+  }
+
+  /* ---------- destruir ---------- */
+  $('btnDestroy').onclick = () => {
+    const row = $('moveRow'), cv = $('dust'), st = $('stage');
+    const w = st.clientWidth, h = st.clientHeight;
+    cv.width = w; cv.height = h; cv.classList.remove('hide');
+    const g = cv.getContext('2d');
+    const parts = Array.from({length:900}, () => ({
+      x: Math.random()*w, y: Math.random()*row.clientHeight,
+      vx: Math.random()*2.4+.4, vy:(Math.random()-.5)*1.2,
+      a:1, r: Math.random()*1.6+.4, d: Math.random()*.45
+    }));
+    row.classList.add('fade-out');
+    let f = 0;
+    (function burn(){
+      g.clearRect(0,0,w,h); f++;
+      let alive = 0;
+      for (const p of parts){
+        if (f/60 < p.d) { alive++; g.globalAlpha = 1; }
+        else { p.x += p.vx; p.y += p.vy - .12; p.vy += .012; p.a -= .012; g.globalAlpha = Math.max(0,p.a); }
+        if (p.a > 0) alive++;
+        g.fillStyle = '#8FBFAF'; g.fillRect(p.x,p.y,p.r,p.r);
+      }
+      if (alive && f < 260) requestAnimationFrame(burn);
+      else {
+        g.clearRect(0,0,w,h); row.classList.add('hide');
+        $('barFill').style.width = '0%';
+        $('moveHint').textContent = 'Destruído. Não existe cópia em lugar nenhum.';
+        setLive(false); ports('linha encerrada','desconectado');
+        status('sala encerrada'); clearInterval(timerId); $('timer').textContent = '—';
+      }
+    })();
+  };
+  $('btnAgain').onclick = () => location.reload();
+
+  /* ---------- chegou por QR: entra direto ---------- */
+  const deep = location.hash.match(/sala=([A-Z0-9]{6})/i);
+  if (deep) { show('s3'); fill(deep[1]); join(deep[1]); }
+
+  /* ---------- sem câmera: esconde o botão de escanear ---------- */
+  hasCam().then(ok => { if (!ok) { $('goScan').classList.add('hide'); $('s1hint').textContent = 'Não achamos câmera aqui — a entrada por código funciona igual.'; } });
+
+  status('escolha um lado para começar');
+})();
+</script>
+</body>
+</html>

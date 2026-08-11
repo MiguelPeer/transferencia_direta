@@ -18,6 +18,10 @@ const PUBLIC_BASE_URL = process.env.PUBLIC_BASE_URL ?? `http://localhost:${PORT}
 const roomManager = new RoomManager();
 const createRoomLimiter = new RateLimiter({ windowMs: 60_000, max: 10 }); // 10 salas/min/IP
 const wsConnectLimiter = new RateLimiter({ windowMs: 60_000, max: 30 }); // 30 conexoes ws/min/IP
+// o codigo de 6 chars tem bem menos entropia que o token (~30 bits vs 128) -
+// esse limiter mais apertado + o TTL de 10min da sala e o que torna
+// forca-bruta inviavel nesse endpoint.
+const codeResolveLimiter = new RateLimiter({ windowMs: 60_000, max: 20 }); // 20 tentativas/min/IP
 
 function log(msg) {
   console.log(`[${new Date().toISOString()}] ${msg}`);
@@ -74,10 +78,14 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "POST" && url.pathname === "/api/rooms") {
     if (!createRoomLimiter.check(ip)) return json(res, 429, { error: "rate_limited" });
-    const room = roomManager.create();
+    const role = url.searchParams.get("role");
+    if (!["origin", "dest"].includes(role)) return json(res, 400, { error: "invalid_role" });
+    const room = roomManager.create({ role });
     const joinUrl = `${PUBLIC_BASE_URL}/r/${room.token}`;
     return json(res, 201, {
       token: room.token,
+      code: room.code,
+      role: room.creatorRole,
       joinUrl,
       qrUrl: `/api/rooms/${room.token}/qr`,
       maxDownloads: room.maxDownloads,
@@ -95,11 +103,27 @@ const server = http.createServer(async (req, res) => {
     return res.end(svg);
   }
 
+  const byCodeMatch = url.pathname.match(/^\/api\/rooms\/by-code\/([A-Za-z0-9]+)$/);
+  if (req.method === "GET" && byCodeMatch) {
+    if (!codeResolveLimiter.check(ip)) return json(res, 429, { error: "rate_limited" });
+    const room = roomManager.getByCode(byCodeMatch[1]);
+    if (!room || room.status === "destroyed") return json(res, 404, { error: "room_not_found" });
+    return json(res, 200, {
+      token: room.token,
+      joinRole: roomManager.joinRole(room.token),
+      joinUrl: `${PUBLIC_BASE_URL}/r/${room.token}`,
+    });
+  }
+
   const statusMatch = url.pathname.match(/^\/api\/rooms\/([\w-]+)$/);
   if (req.method === "GET" && statusMatch) {
     const room = roomManager.get(statusMatch[1]);
     if (!room) return json(res, 404, { error: "room_not_found" });
-    return json(res, 200, { status: room.status, downloadsLeft: room.downloadsLeft });
+    return json(res, 200, {
+      status: room.status,
+      downloadsLeft: room.downloadsLeft,
+      joinRole: roomManager.joinRole(room.token),
+    });
   }
 
   if (req.method === "GET" && url.pathname === "/api/turn-credentials") {
@@ -113,9 +137,10 @@ const server = http.createServer(async (req, res) => {
     return json(res, 200, creds);
   }
 
-  // rota amigavel /r/<token> tambem serve a mesma pagina de sala (roteamento no client)
+  // rota amigavel /r/<token> serve a mesma pagina unica (roteamento no client
+  // detecta o token na URL e entra direto na sala, sem tela intermediaria)
   if (req.method === "GET" && url.pathname.startsWith("/r/")) {
-    return serveStatic(req, res, "/room.html");
+    return serveStatic(req, res, "/index.html");
   }
 
   if (req.method === "GET") {
@@ -184,6 +209,7 @@ const heartbeat = setInterval(() => {
 const sweepInterval = setInterval(() => {
   createRoomLimiter.sweep();
   wsConnectLimiter.sweep();
+  codeResolveLimiter.sweep();
 }, 60_000);
 
 server.listen(PORT, () => {

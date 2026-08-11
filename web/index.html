@@ -3,54 +3,156 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>poeira — transferência efêmera</title>
+<title>transferência direta</title>
 <link rel="stylesheet" href="/assets/styles.css">
 </head>
 <body>
+<main class="shell">
 
-  <div class="card">
-    <div class="eyebrow"><span class="dot" id="dot"></span><span id="eyebrowText">criando sala</span></div>
-    <h1 id="heading">escaneie para conectar</h1>
-    <div class="sub" id="subtext">Abra a câmera do celular e aponte para o código. O arquivo vai direto do celular para este computador, sem passar por servidor.</div>
-
-    <div class="stage" id="stage">
-      <div class="qr-wrap stage-panel is-active" id="qrWrap">
-        <div class="qr" id="qrBox"></div>
-        <div class="qr-label" id="qrLabel">gerando código…</div>
-      </div>
-
-      <div class="transfer stage-panel" id="transfer">
-        <div class="transfer-name" id="transferName">—</div>
-        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
-        <div class="transfer-pct" id="transferPct">0%</div>
-      </div>
-
-      <div class="received stage-panel" id="received">
-        <img id="previewImg" class="preview-media" alt="" hidden>
-        <video id="previewVideo" class="preview-media" hidden muted playsinline controls></video>
-        <canvas id="dissolveCanvas" class="dissolve-canvas" hidden></canvas>
-        <div class="received-overlay">
-          <div class="received-name" id="receivedName">—</div>
-          <div class="received-hint" id="receivedHint">integridade confirmada — hash sha-256 conferido</div>
-          <button type="button" id="downloadBtn">baixar arquivo</button>
-          <button type="button" id="destroyBtn" hidden>destruir agora</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="meta">
-      <span>sala <strong id="tokenLabel">—</strong></span>
-      <span id="expiryLabel">expira em 10min</span>
-    </div>
-
-    <div class="status-line">
-      <span id="statusText">aguardando conexão</span>
-    </div>
-
-    <div class="footnote">nenhum dado é salvo em servidor</div>
+  <div class="top">
+    <h1 class="wordmark">transferência <span>direta</span></h1>
+    <span class="nosrv">ponta a ponta &middot; nada fica em servidor</span>
   </div>
 
-<script type="module" src="/assets/index-page.js"></script>
+  <div class="diagram" id="diagram">
+    <svg viewBox="0 0 600 128" role="img" aria-labelledby="dt">
+      <title id="dt">Ligação entre este dispositivo e o outro</title>
+      <rect class="port-box" x="8" y="30" width="168" height="68" rx="10" stroke-width="1"/>
+      <text class="port-label" x="26" y="55">este lado</text>
+      <text class="port-name" id="portA" x="26" y="76">parado</text>
+      <circle class="jack-ring" cx="176" cy="64" r="9"/><circle class="jack-core" cx="176" cy="64" r="3.5"/>
+      <rect class="port-box" x="424" y="30" width="168" height="68" rx="10" stroke-width="1"/>
+      <text class="port-label" x="442" y="55">outro lado</text>
+      <text class="port-name" id="portB" x="442" y="76">não conectado</text>
+      <circle class="jack-ring" cx="424" cy="64" r="9"/><circle class="jack-core" cx="424" cy="64" r="3.5"/>
+      <path id="cable" d="M 185 64 Q 305 106 415 64"/>
+      <circle id="pulse" r="3.5" fill="#5FD3AB"/>
+    </svg>
+  </div>
+
+  <div class="panel">
+    <div class="body">
+
+      <!-- ============ TELA 1: intencao ============ -->
+      <section id="s1">
+        <p class="eyebrow">o que você quer fazer neste aparelho</p>
+        <div class="intent">
+          <button class="big" id="goSend">
+            <span class="arrow">&rarr;</span>
+            <strong>Enviar daqui</strong>
+            <small>Escolho o arquivo e abro a sala. O outro aparelho entra.</small>
+          </button>
+          <button class="big" id="goRecv">
+            <span class="arrow">&larr;</span>
+            <strong>Receber aqui</strong>
+            <small>Abro a sala e espero. O outro aparelho manda o arquivo.</small>
+          </button>
+        </div>
+
+        <div class="sep"><span>o outro aparelho já abriu a sala?</span></div>
+
+        <div class="row" style="margin-top:0">
+          <button class="btn btn-ghost" id="goScan">Escanear o QR</button>
+          <button class="btn btn-ghost" id="goCode">Entrar com o código</button>
+        </div>
+        <p class="hint" id="s1hint">O QR e o código levam para a mesma sala — use o que o seu aparelho permitir.</p>
+      </section>
+
+      <!-- ============ TELA 2: sala aberta ============ -->
+      <section id="s2" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+
+        <div id="sendFile">
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivo">
+            <p>Arraste o arquivo aqui ou clique para escolher</p>
+            <small>vai inteiro, do jeito que saiu da câmera</small>
+          </div>
+          <input type="file" id="fileInput" class="hide" accept="image/*,video/*">
+          <div class="file-row hide" id="fileRow">
+            <span class="file-glyph"><i></i></span>
+            <span class="file-meta"><strong id="fileName">—</strong><span id="fileSize">—</span></span>
+            <button class="file-x" id="fileClear">trocar</button>
+          </div>
+        </div>
+
+        <div id="roomBox" class="hide">
+          <p class="eyebrow" id="roomEyebrow">a sala está aberta &middot; leve para o outro aparelho</p>
+          <div class="join">
+            <div class="qrcard" id="qrCard"><div id="qrBox"></div></div>
+            <div class="joinside">
+              <strong>Tem câmera? Aponte.</strong>
+              <p>Abra a câmera do celular no QR. Sem câmera, digite o código no outro aparelho.</p>
+              <div class="code-shell">
+                <div class="code" id="codeOut">— — — — — —</div>
+                <button class="btn btn-ghost" id="btnCopy">Copiar</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TELA 3: entrar com codigo ============ -->
+      <section id="s3" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+        <p class="eyebrow">código de seis caracteres</p>
+        <div class="slots" id="slots">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 1">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 2">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 3">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 4">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 5">
+          <input maxlength="1" autocomplete="off" aria-label="caractere 6">
+        </div>
+        <div class="row">
+          <button class="btn btn-ghost" id="btnPaste">Colar</button>
+          <button class="btn btn-solid" id="btnConnect" disabled>Entrar na sala</button>
+        </div>
+        <p class="hint" id="s3hint">O código aparece na tela de quem abriu a sala. Vale por 10 minutos.</p>
+      </section>
+
+      <!-- ============ TELA 4: scanner ============ -->
+      <section id="s4" class="hide">
+        <button class="back" data-back>&larr; voltar</button>
+        <div class="scanwrap">
+          <video id="scan" playsinline muted></video>
+          <span class="reticle"></span>
+        </div>
+        <p class="hint" id="s4hint">Aponte para o QR da outra tela.</p>
+      </section>
+
+      <!-- ============ TELA 5: transferencia ============ -->
+      <section id="s5" class="hide">
+        <div class="stage" id="stage">
+          <img id="previewImg" class="preview-media hide" alt="">
+          <video id="previewVideo" class="preview-media hide" muted playsinline controls></video>
+          <div class="file-row" id="moveRow" style="margin-bottom:0">
+            <span class="file-glyph"><i></i></span>
+            <span class="file-meta"><strong id="moveName">—</strong><span id="moveSize">—</span></span>
+            <span class="file-x" id="movePct" style="color:var(--mint)">0%</span>
+          </div>
+          <div class="bar"><i id="barFill"></i></div>
+          <canvas class="dust hide" id="dust"></canvas>
+        </div>
+        <div class="row hide" id="doneRow">
+          <button class="btn btn-ghost" id="btnDestroy">Destruir</button>
+          <button class="btn btn-solid" id="btnAgain">Nova transferência</button>
+        </div>
+        <p class="hint" id="moveHint">Os dados vão direto de um aparelho para o outro.</p>
+      </section>
+
+    </div>
+
+    <div class="status">
+      <span><span class="dot" id="dot"></span><span id="statusText">nenhuma sala</span></span>
+      <span id="timer">—</span>
+    </div>
+  </div>
+</main>
+
+<div class="toast" id="toast">código copiado</div>
+
+<script src="/assets/vendor/jsqr.js"></script>
+<script type="module" src="/assets/app.js"></script>
 
 </body>
 </html>

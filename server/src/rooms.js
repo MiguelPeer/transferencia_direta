@@ -7,15 +7,37 @@ import crypto from "node:crypto";
 const ROOM_TTL_MS = 10 * 60 * 1000; // sala nao reclamada expira em 10min
 const CONNECTED_TTL_MS = 30 * 60 * 1000; // teto de vida apos os 2 peers conectarem
 const MAX_DOWNLOADS_DEFAULT = 3;
-const ROLES = new Set(["origin", "dest"]); // origin = celular (envia), dest = computador (recebe)
+const ROLES = new Set(["origin", "dest"]); // origin = quem envia, dest = quem recebe (nao amarrado a tipo de aparelho)
+const OTHER_ROLE = { origin: "dest", dest: "origin" };
+
+// Alfabeto do codigo de sala ditavel por telefone: sem 0/O/1/I, que se
+// confundem por voz ou em teclados diferentes.
+const CODE_ALPHABET = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789";
+const CODE_LENGTH = 6;
 
 export class RoomManager {
   #rooms = new Map();
+  #byCode = new Map(); // code -> token, resolucao O(1) pra entrada digitada
 
-  create({ maxDownloads = MAX_DOWNLOADS_DEFAULT } = {}) {
-    const token = crypto.randomBytes(16).toString("base64url"); // ~128 bits, imprevisivel
+  #generateCode() {
+    let code;
+    do {
+      code = Array.from({ length: CODE_LENGTH }, () => CODE_ALPHABET[crypto.randomInt(CODE_ALPHABET.length)]).join("");
+    } while (this.#byCode.has(code));
+    return code;
+  }
+
+  // role = papel que quem esta abrindo a sala escolheu ("origin" envia,
+  // "dest" recebe). Quem entrar depois (via QR ou codigo) herda o
+  // complemento automaticamente - ver getByCode/get + creatorRole.
+  create({ role, maxDownloads = MAX_DOWNLOADS_DEFAULT } = {}) {
+    if (!ROLES.has(role)) throw new Error("invalid_role");
+    const token = crypto.randomBytes(16).toString("base64url"); // ~128 bits, imprevisivel - o QR usa isso
+    const code = this.#generateCode(); // curto, so pra digitacao manual - nao substitui o token
     const room = {
       token,
+      code,
+      creatorRole: role,
       createdAt: Date.now(),
       status: "waiting", // waiting -> connected -> destroyed
       maxDownloads,
@@ -25,11 +47,24 @@ export class RoomManager {
     };
     room.timer = setTimeout(() => this.destroy(token, "expired"), ROOM_TTL_MS);
     this.#rooms.set(token, room);
+    this.#byCode.set(code, token);
     return room;
   }
 
   get(token) {
     return this.#rooms.get(token);
+  }
+
+  getByCode(code) {
+    const token = this.#byCode.get(code.toUpperCase());
+    return token ? this.get(token) : undefined;
+  }
+
+  // papel que quem ainda vai entrar na sala deve assumir - sempre o
+  // complemento de quem abriu.
+  joinRole(token) {
+    const room = this.get(token);
+    return room ? OTHER_ROLE[room.creatorRole] : undefined;
   }
 
   isRoleTaken(token, role) {
@@ -85,6 +120,7 @@ export class RoomManager {
     }
     room.peers.clear();
     this.#rooms.delete(token);
+    this.#byCode.delete(room.code);
   }
 
   get size() {
