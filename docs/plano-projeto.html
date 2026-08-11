@@ -277,9 +277,9 @@
     <h1>poeira</h1>
     <p class="lede">Transferência de arquivo P2P efêmera entre celular e computador — sem banco de dados, sem cópia num servidor, sem sobrevida depois de entregue.</p>
     <div class="header-meta">
-      <span class="meta-chip">etapa atual <strong>4 de 6</strong></span>
+      <span class="meta-chip">etapa atual <strong>6 de 6</strong></span>
       <span class="meta-chip">stack <strong>Node.js · WebRTC · vanilla JS</strong></span>
-      <span class="meta-chip">estado <strong>transferência p2p com hash + fallback TURN</strong></span>
+      <span class="meta-chip">estado <strong>roadmap completo — testado na mesma rede</strong></span>
     </div>
   </header>
 
@@ -372,13 +372,13 @@
       </div>
       <div class="roadmap-row">
         <span class="rn mono">05</span>
-        <span class="rt">Partículas no arquivo real + descarte real<span>efeito aplicado ao conteúdo recebido, sessão destruída de fato</span></span>
-        <span class="status next">próximo</span>
+        <span class="rt">Partículas no arquivo real + descarte real<span>efeito aplicado ao preview recebido, sala destruída de fato no servidor</span></span>
+        <span class="status done">concluído</span>
       </div>
       <div class="roadmap-row">
         <span class="rn mono">06</span>
-        <span class="rt">Polimento visual final<span>seguindo a direção de design já definida</span></span>
-        <span class="status later">planejado</span>
+        <span class="rt">Polimento visual final<span>transições entre telas, zona de seleção de arquivo</span></span>
+        <span class="status done">concluído</span>
       </div>
     </div>
   </section>
@@ -401,6 +401,8 @@
     webrtc-client.js     RTCPeerConnection + troca de SDP/ICE <em>(etapa 2)</em>
     file-transfer.js     chunking + hash SHA-256 + reconstrucao do arquivo <em>(etapa 3)</em>
     ice-config.js         busca credenciais TURN em /api/turn-credentials <em>(etapa 4)</em>
+    dissolve.js           particulas aplicadas ao preview real <em>(etapa 5)</em>
+    panels.js             fade sequencial entre telas <em>(etapa 6)</em>
     index-page.js, room-page.js   logica de cada pagina (script externo — CSP nao permite inline)
 <strong>preview.html</strong>      protótipo do efeito de partículas <em>(referência)</em>
 <strong>SECURITY.md</strong>       modelo de ameaças e decisões de segurança</pre>
@@ -416,6 +418,7 @@
         <li><strong>Rate limiting por IP</strong> na criação de sala e em conexões WebSocket, mais heartbeat pra derrubar conexões mortas.</li>
         <li><strong>Credenciais TURN efêmeras (HMAC, 5min)</strong> em vez de secret estático exposto no cliente.</li>
         <li><strong>Hash SHA-256 fim a fim</strong> — calculado na origem antes do envio, recalculado no destino após reconstruir o arquivo; se não bater, o download é recusado.</li>
+        <li><strong>"Destruir agora" descarta de verdade</strong> — dispara a dissolução em partículas e manda destruir a sala no servidor; o `Blob` local é liberado da memória do navegador.</li>
       </ul>
       <div class="callout-ref">detalhamento completo → SECURITY.md</div>
     </div>

@@ -12,7 +12,7 @@ Transferência de arquivo P2P efêmera entre celular e computador. Sem banco de 
 
 ## Estado do projeto
 
-Isto implementa as **etapas 1 a 4** do roadmap: servidor de sinalização + sala/token + QR code, conexão `RTCPeerConnection` real entre os dois peers, transferência do arquivo em si pelo `RTCDataChannel` (chunks de 16KB com backpressure, hash SHA-256 conferido nas duas pontas, sem recompressão — bytes e metadados como EXIF chegam intactos), e fallback TURN com credenciais efêmeras pra quando os dois peers não estão na mesma rede. O efeito de partículas aplicado ao arquivo real vem nas etapas seguintes — ver [prompt-projeto-poeira.md](prompt-projeto-poeira.md) para o roadmap completo e [preview.html](preview.html) para o protótipo de referência do efeito visual.
+Isto implementa o roadmap **completo (etapas 1 a 6)**: servidor de sinalização + sala/token + QR code, conexão `RTCPeerConnection` real entre os dois peers, transferência do arquivo em si pelo `RTCDataChannel` (chunks de 16KB com backpressure, hash SHA-256 conferido nas duas pontas, sem recompressão — bytes e metadados como EXIF chegam intactos), fallback TURN com credenciais efêmeras pra quando os dois peers não estão na mesma rede, e o efeito de dissolução em partículas aplicado ao arquivo real recebido — com descarte de verdade da sessão ao destruir (a sala morre no servidor, não é só cosmético). Testado ponta a ponta na mesma rede; teste em redes diferentes com um provedor TURN real e deploy em produção ficam para depois — ver [prompt-projeto-poeira.md](prompt-projeto-poeira.md) para o roadmap original e [preview.html](preview.html) para o protótipo de referência do efeito visual.
 
 ## Estrutura
 
@@ -33,6 +33,8 @@ web/              front-end estático (vanilla JS/HTML/CSS)
     webrtc-client.js     RTCPeerConnection + troca de SDP/ICE pelo canal de sinalização
     file-transfer.js     chunking + hash SHA-256 + reconstrução do arquivo pelo RTCDataChannel
     ice-config.js         busca credenciais TURN em /api/turn-credentials, monta STUN+TURN
+    dissolve.js           efeito de dissolução em partículas aplicado ao preview real
+    panels.js             troca com fade sequencial entre os painéis sobrepostos da tela
     index-page.js         lógica da página do computador (script externo, exigido pela CSP)
     room-page.js          lógica da página do celular (idem)
 preview.html      protótipo do efeito de dissolução em partículas (referência)
@@ -57,5 +59,5 @@ Para testar com os dois peers em **redes diferentes** (ex: celular em dados móv
 2. ✅ Conexão WebRTC entre os dois peers (mesma rede, via STUN, sem TURN)
 3. ✅ Transferência via `RTCDataChannel` em chunks, com hash SHA-256 e metadados originais preservados
 4. ✅ Fallback STUN/TURN para redes diferentes (credenciais efêmeras do `turn.js`, consumidas pelo client via `ice-config.js`)
-5. Efeito de partículas aplicado ao arquivo real + descarte real da sessão ao destruir
-6. Polimento visual final
+5. ✅ Efeito de partículas aplicado ao arquivo real recebido + descarte real da sessão ao destruir
+6. ✅ Polimento visual final (transições entre telas, zona de seleção de arquivo)

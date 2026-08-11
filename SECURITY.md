@@ -12,12 +12,12 @@ O projeto existe pra resolver um problema de privacidade (arquivo pessoal passan
 
 O servidor de sinalização é o único componente que roda em infraestrutura minha — por isso é o que recebe mais atenção:
 
-- **Allowlist de origem** no upgrade do WebSocket (`ALLOWED_ORIGINS`): conexão de qualquer origem fora da lista é recusada com 403 antes mesmo do handshake.
+- **Allowlist de origem** no upgrade do WebSocket (`ALLOWED_ORIGINS`): conexão de qualquer origem fora da lista é recusada com 403 antes mesmo do handshake. Suporta um curinga de subdomínio (ex: `https://*.loca.lt`) só pra facilitar teste atrás de túneis/preview hosts efêmeros em dev — nunca usar curinga em produção, onde a lista deve ser de origens exatas.
 - **Validação estrita de mensagem**: só os tipos conhecidos (`join`, `offer`, `answer`, `ice-candidate`, `download-confirmed`, `destroy`, ...) são aceitos; qualquer coisa fora do schema fecha a conexão.
 - **Limite de tamanho de mensagem** (32KB, via `maxPayload` do `ws` + checagem manual) — sinalização não precisa de mais que isso, então não há como usar esse canal pra empurrar dados grandes.
 - **Rate limiting por IP**: criação de sala (10/min) e conexões WebSocket (30/min) — mitiga abuso/DoS trivial sem precisar de infraestrutura extra.
 - **Heartbeat (ping/pong a cada 30s)** derruba conexões mortas, evitando que salas fiquem presas na memória por peers que sumiram sem fechar a conexão corretamente.
-- **Headers de segurança** em toda resposta HTTP: `Content-Security-Policy` restritiva (sem scripts inline — por isso toda lógica de página vive em arquivos `.js` externos em `web/assets/`, nunca em `<script>` inline —, sem fontes externas além do Google Fonts), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`. `connect-src` inclui `stun:`, `turn:` e `turns:` porque alguns navegadores aplicam a CSP também às URLs de ICE server do `RTCPeerConnection`.
+- **Headers de segurança** em toda resposta HTTP: `Content-Security-Policy` restritiva (sem scripts inline — por isso toda lógica de página vive em arquivos `.js` externos em `web/assets/`, nunca em `<script>` inline —, sem fontes externas além do Google Fonts), `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Referrer-Policy: no-referrer`. `connect-src` inclui `stun:`, `turn:` e `turns:` porque alguns navegadores aplicam a CSP também às URLs de ICE server do `RTCPeerConnection`; `img-src`/`media-src` incluem `blob:` pro preview do arquivo recebido (etapa 5), que é sempre um `Blob` local — nunca uma URL remota.
 - **Estado 100% em memória** — reiniciar o processo apaga todas as salas. Não há dump em disco, log de arquivo transferido, nem analytics de conteúdo.
 
 Em produção, o servidor precisa rodar atrás de TLS (`wss://`) — o código já resolve `ws`/`wss` dinamicamente pelo protocolo da página, mas o TLS em si é responsabilidade do proxy/host escolhido (fora do escopo deste servidor Node puro).
@@ -39,6 +39,12 @@ Em produção, o servidor precisa rodar atrás de TLS (`wss://`) — o código j
 - Como o Web Crypto do navegador não tem hash incremental, o cálculo exige o buffer completo em memória — suficiente para foto/vídeo de uso típico; um arquivo de vários GB exigiria hash incremental à parte (fora do escopo atual).
 - **Backpressure no envio**: o remetente monitora `dataChannel.bufferedAmount` e pausa novos chunks acima de 1MB em buffer local, retomando só quando esvaziar abaixo de 256KB — evita estourar memória do navegador em arquivos grandes ou redes lentas.
 - O download só é liberado no destino depois que o hash confere; o clique em "baixar arquivo" dispara o `download-confirmed` de sinalização já existente desde a etapa 1, decrementando o contador de downloads da sala.
+
+## Dissolução e descarte real (etapa 5, implementada)
+
+- O botão "destruir agora" só aparece depois que o download é confirmado (`web/assets/index-page.js`). Ao clicar: a animação de partículas (`dissolve.js`) amostra os pixels do preview real (imagem ou frame atual do vídeo) direto de um `<canvas>` local — nada disso sai do navegador, é só leitura de pixel local pra decidir a cor de cada partícula.
+- O descarte não é só a animação: ao terminar, o client manda `destroy` pela sinalização (o mesmo tipo de mensagem que já existia desde a etapa 1), o servidor destrói a sala de verdade (`RoomManager.destroy`) e fecha os dois WebSockets. Do lado do client, o `Blob` do arquivo é liberado (`URL.revokeObjectURL`) e as referências ao `src` da mídia são removidas, então nada fica retido em memória depois.
+- Se o usuário nunca clicar em "destruir agora", a sala ainda expira pelos mecanismos já existentes (TTL de 10min sem conexão, teto de 30min conectados, ou limite de downloads) — o botão é conveniência, não a única rede de segurança.
 
 ## Fora do escopo (de propósito)
 

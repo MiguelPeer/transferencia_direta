@@ -10,25 +10,31 @@
 
   <div class="card">
     <div class="eyebrow"><span class="dot" id="dot"></span><span id="eyebrowText">criando sala</span></div>
-    <h1>escaneie para conectar</h1>
-    <div class="sub">Abra a câmera do celular e aponte para o código. O arquivo vai direto do celular para este computador, sem passar por servidor.</div>
+    <h1 id="heading">escaneie para conectar</h1>
+    <div class="sub" id="subtext">Abra a câmera do celular e aponte para o código. O arquivo vai direto do celular para este computador, sem passar por servidor.</div>
 
     <div class="stage" id="stage">
-      <div class="qr-wrap" id="qrWrap">
+      <div class="qr-wrap stage-panel is-active" id="qrWrap">
         <div class="qr" id="qrBox"></div>
         <div class="qr-label" id="qrLabel">gerando código…</div>
       </div>
 
-      <div class="transfer" id="transfer" style="display:none">
+      <div class="transfer stage-panel" id="transfer">
         <div class="transfer-name" id="transferName">—</div>
         <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
         <div class="transfer-pct" id="transferPct">0%</div>
       </div>
 
-      <div class="received" id="received" style="display:none">
-        <div class="received-name" id="receivedName">—</div>
-        <div class="received-hint" id="receivedHint">integridade confirmada — hash sha-256 conferido</div>
-        <button type="button" id="downloadBtn">baixar arquivo</button>
+      <div class="received stage-panel" id="received">
+        <img id="previewImg" class="preview-media" alt="" hidden>
+        <video id="previewVideo" class="preview-media" hidden muted playsinline controls></video>
+        <canvas id="dissolveCanvas" class="dissolve-canvas" hidden></canvas>
+        <div class="received-overlay">
+          <div class="received-name" id="receivedName">—</div>
+          <div class="received-hint" id="receivedHint">integridade confirmada — hash sha-256 conferido</div>
+          <button type="button" id="downloadBtn">baixar arquivo</button>
+          <button type="button" id="destroyBtn" hidden>destruir agora</button>
+        </div>
       </div>
     </div>
 

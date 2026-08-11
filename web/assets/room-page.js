@@ -2,6 +2,7 @@ import { connectSignaling } from "/assets/signaling-client.js";
 import { createPeerConnection } from "/assets/webrtc-client.js";
 import { sendFile } from "/assets/file-transfer.js";
 import { loadIceServers } from "/assets/ice-config.js";
+import { switchPanel } from "/assets/panels.js";
 
 const dot = document.getElementById("dot");
 const eyebrowText = document.getElementById("eyebrowText");
@@ -18,10 +19,9 @@ const transferPct = document.getElementById("transferPct");
 const SIGNAL_TYPES = new Set(["offer", "answer", "ice-candidate"]);
 const token = location.pathname.replace(/^\/r\//, "");
 
+const stagePanels = [centerMsg, filePicker, transfer];
 function showPanel(el) {
-  for (const panel of [centerMsg, filePicker, transfer]) {
-    panel.style.display = panel === el ? (panel === centerMsg ? "block" : "flex") : "none";
-  }
+  switchPanel(stagePanels, el);
 }
 
 function setProgress(sent, total) {

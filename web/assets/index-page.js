@@ -2,29 +2,37 @@ import { connectSignaling } from "/assets/signaling-client.js";
 import { createPeerConnection } from "/assets/webrtc-client.js";
 import { createFileReceiver } from "/assets/file-transfer.js";
 import { loadIceServers } from "/assets/ice-config.js";
+import { buildParticles, runDissolve } from "/assets/dissolve.js";
+import { switchPanel } from "/assets/panels.js";
 
 const dot = document.getElementById("dot");
 const eyebrowText = document.getElementById("eyebrowText");
+const heading = document.getElementById("heading");
+const subtext = document.getElementById("subtext");
 const qrBox = document.getElementById("qrBox");
 const qrLabel = document.getElementById("qrLabel");
 const tokenLabel = document.getElementById("tokenLabel");
 const statusText = document.getElementById("statusText");
+const stage = document.getElementById("stage");
 const qrWrap = document.getElementById("qrWrap");
 const transfer = document.getElementById("transfer");
 const transferName = document.getElementById("transferName");
 const progressFill = document.getElementById("progressFill");
 const transferPct = document.getElementById("transferPct");
 const received = document.getElementById("received");
+const previewImg = document.getElementById("previewImg");
+const previewVideo = document.getElementById("previewVideo");
+const dissolveCanvas = document.getElementById("dissolveCanvas");
 const receivedName = document.getElementById("receivedName");
 const receivedHint = document.getElementById("receivedHint");
 const downloadBtn = document.getElementById("downloadBtn");
+const destroyBtn = document.getElementById("destroyBtn");
 
 const SIGNAL_TYPES = new Set(["offer", "answer", "ice-candidate"]);
 
+const stagePanels = [qrWrap, transfer, received];
 function showPanel(el) {
-  for (const panel of [qrWrap, transfer, received]) {
-    panel.style.display = panel === el ? "flex" : "none";
-  }
+  switchPanel(stagePanels, el);
 }
 
 function setProgress(receivedBytes, total) {
@@ -69,13 +77,22 @@ async function createRoom() {
               statusText.textContent = "recebendo arquivo…";
             },
             onProgress: (recv, total) => setProgress(recv, total),
-            onComplete: ({ blob, name }) => {
+            onComplete: ({ blob, name, mime }) => {
               statusText.textContent = "arquivo recebido";
+              heading.textContent = `${name} recebido`;
+              subtext.textContent = "Transferido direto do celular. Qualidade e metadados originais preservados.";
               receivedName.textContent = name;
               receivedHint.textContent = "integridade confirmada — hash sha-256 conferido";
-              showPanel(received);
 
               const url = URL.createObjectURL(blob);
+              const isVideo = mime.startsWith("video/");
+              const previewEl = isVideo ? previewVideo : previewImg;
+              previewEl.src = url;
+              previewEl.hidden = false;
+              (isVideo ? previewImg : previewVideo).hidden = true;
+
+              showPanel(received);
+
               downloadBtn.onclick = () => {
                 const a = document.createElement("a");
                 a.href = url;
@@ -84,6 +101,31 @@ async function createRoom() {
                 ws.send(JSON.stringify({ type: "download-confirmed" }));
                 downloadBtn.disabled = true;
                 downloadBtn.textContent = "baixado";
+                destroyBtn.hidden = false;
+              };
+
+              destroyBtn.onclick = () => {
+                destroyBtn.disabled = true;
+                const rect = stage.getBoundingClientRect();
+                const w = Math.floor(rect.width);
+                const h = Math.floor(rect.height);
+                const particles = buildParticles(previewEl, w, h);
+
+                previewEl.hidden = true;
+                dissolveCanvas.hidden = false;
+                runDissolve(dissolveCanvas, particles, w, h, () => {
+                  ws.send(JSON.stringify({ type: "destroy" }));
+                  URL.revokeObjectURL(url);
+                  previewEl.removeAttribute("src");
+                  dissolveCanvas.getContext("2d").clearRect(0, 0, dissolveCanvas.width, dissolveCanvas.height);
+                  statusText.textContent = "arquivo descartado";
+                  receivedName.textContent = "descartado";
+                  receivedHint.textContent = "a sessão foi destruída — nada ficou salvo em servidor";
+                  downloadBtn.hidden = true;
+                  destroyBtn.textContent = "gerar novo código";
+                  destroyBtn.disabled = false;
+                  destroyBtn.onclick = () => location.reload();
+                });
               };
             },
             onError: (reason) => {

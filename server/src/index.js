@@ -39,7 +39,7 @@ function applySecurityHeaders(res) {
   res.setHeader("Referrer-Policy", "no-referrer");
   res.setHeader(
     "Content-Security-Policy",
-    "default-src 'self'; img-src 'self' data:; " +
+    "default-src 'self'; img-src 'self' data: blob:; media-src 'self' blob:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; " +
       "connect-src 'self' ws: wss: stun: turn: turns:; base-uri 'none'; form-action 'none'; object-src 'none'"
   );
