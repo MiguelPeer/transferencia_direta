@@ -1,0 +1,441 @@
+<title>poeira — plano do projeto</title>
+<style>
+  :root{
+    --bg: #1c1b1a;
+    --bg-raised: #232220;
+    --bg-sunken: #171615;
+    --bone: #edeae4;
+    --bone-dim: #a8a49c;
+    --bone-faint: #706c64;
+    --dust: #5b7c99;
+    --dust-dim: #3d5266;
+    --dust-soft: rgba(91,124,153,0.12);
+    --line: #35332f;
+    --moss: #7c9a80;
+    --moss-dim: #4f6552;
+    --amber: #b99a63;
+  }
+
+  *{ box-sizing: border-box; }
+
+  body{
+    background: var(--bg);
+    color: var(--bone);
+    font-family: Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    line-height: 1.55;
+    background-image:
+      radial-gradient(circle at 12% 8%, rgba(91,124,153,0.06), transparent 42%),
+      radial-gradient(circle at 88% 92%, rgba(91,124,153,0.05), transparent 45%);
+  }
+
+  .doc{
+    max-width: 760px;
+    margin: 0 auto;
+    padding: 72px 28px 120px;
+  }
+
+  .mono{ font-family: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace; }
+
+  /* ---------- header ---------- */
+
+  .eyebrow{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.16em;
+    text-transform: uppercase;
+    color: var(--dust);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 20px;
+  }
+  .eyebrow .dot{
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--dust);
+    box-shadow: 0 0 8px var(--dust);
+  }
+
+  h1{
+    font-size: clamp(34px, 5vw, 46px);
+    font-weight: 700;
+    letter-spacing: -0.02em;
+    text-wrap: balance;
+    margin: 0 0 12px;
+  }
+
+  .lede{
+    font-size: 16px;
+    color: var(--bone-dim);
+    max-width: 56ch;
+    margin: 0 0 32px;
+  }
+
+  .header-meta{
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    padding-top: 24px;
+    border-top: 1px solid var(--line);
+  }
+
+  .meta-chip{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    letter-spacing: 0.04em;
+    color: var(--bone-dim);
+    background: var(--bg-raised);
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 6px 10px;
+  }
+  .meta-chip strong{ color: var(--bone); font-weight: 500; }
+
+  /* ---------- sections ---------- */
+
+  section{ margin-top: 76px; }
+
+  .section-head{
+    display: flex;
+    align-items: baseline;
+    gap: 14px;
+    margin-bottom: 28px;
+  }
+
+  .section-num{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 12px;
+    color: var(--bone-faint);
+  }
+
+  h2{
+    font-size: 21px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+
+  p{ color: var(--bone-dim); margin: 0 0 14px; max-width: 62ch; }
+
+  /* ---------- fluxo (sequencia real) ---------- */
+
+  .flow{
+    position: relative;
+    padding-left: 34px;
+  }
+  .flow::before{
+    content: "";
+    position: absolute;
+    left: 9px; top: 6px; bottom: 6px;
+    width: 1px;
+    background: var(--line);
+  }
+  .flow-step{ position: relative; padding-bottom: 26px; }
+  .flow-step:last-child{ padding-bottom: 0; }
+  .flow-step::before{
+    content: attr(data-n);
+    position: absolute;
+    left: -34px; top: 0;
+    width: 19px; height: 19px;
+    border-radius: 50%;
+    background: var(--bg-raised);
+    border: 1px solid var(--dust-dim);
+    color: var(--dust);
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 10px;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .flow-step h3{
+    font-size: 14.5px;
+    font-weight: 600;
+    color: var(--bone);
+    margin: 0 0 4px;
+  }
+  .flow-step p{ font-size: 13.5px; margin: 0; }
+
+  /* ---------- diagrama ---------- */
+
+  figure{ margin: 0; }
+  .diagram-wrap{
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 18px 12px;
+    overflow-x: auto;
+  }
+  svg text{ font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; }
+  figcaption{
+    font-size: 12px;
+    color: var(--bone-faint);
+    margin-top: 10px;
+    text-align: center;
+  }
+
+  /* ---------- roadmap ---------- */
+
+  .roadmap{ display: flex; flex-direction: column; gap: 1px; background: var(--line); border: 1px solid var(--line); border-radius: 4px; overflow: hidden; }
+  .roadmap-row{
+    display: grid;
+    grid-template-columns: 28px 1fr auto;
+    gap: 16px;
+    align-items: center;
+    background: var(--bg-raised);
+    padding: 14px 16px;
+  }
+  .roadmap-row .rn{ font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; font-size: 12px; color: var(--bone-faint); }
+  .roadmap-row .rt{ font-size: 14px; color: var(--bone); }
+  .roadmap-row .rt span{ display:block; font-size: 12.5px; color: var(--bone-dim); margin-top: 2px; font-weight: 400; }
+
+  .status{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    padding: 4px 9px;
+    border-radius: 3px;
+    white-space: nowrap;
+  }
+  .status.done{ color: var(--moss); background: rgba(124,154,128,0.12); border: 1px solid var(--moss-dim); }
+  .status.next{ color: var(--dust); background: var(--dust-soft); border: 1px solid var(--dust-dim); }
+  .status.later{ color: var(--bone-faint); background: transparent; border: 1px solid var(--line); }
+
+  /* ---------- estrutura de pastas ---------- */
+
+  pre{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 12.5px;
+    color: var(--bone-dim);
+    background: var(--bg-sunken);
+    border: 1px solid var(--line);
+    border-radius: 4px;
+    padding: 20px 22px;
+    overflow-x: auto;
+    line-height: 1.65;
+  }
+  pre strong{ color: var(--bone); font-weight: 500; }
+  pre em{ color: var(--dust); font-style: normal; }
+
+  /* ---------- seguranca callout ---------- */
+
+  .callout{
+    border: 1px solid var(--dust-dim);
+    background: var(--dust-soft);
+    border-radius: 4px;
+    padding: 20px 22px;
+  }
+  .callout ul{ margin: 0; padding-left: 18px; }
+  .callout li{ font-size: 13.5px; color: var(--bone-dim); margin-bottom: 8px; }
+  .callout li:last-child{ margin-bottom: 0; }
+  .callout li strong{ color: var(--bone); font-weight: 500; }
+  .callout-ref{
+    margin-top: 14px;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    color: var(--bone-faint);
+  }
+
+  /* ---------- tabela de stack ---------- */
+
+  table{ width: 100%; border-collapse: collapse; }
+  th, td{
+    text-align: left;
+    padding: 11px 14px;
+    font-size: 13px;
+    border-bottom: 1px solid var(--line);
+  }
+  th{
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 10.5px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    color: var(--bone-faint);
+    font-weight: 500;
+  }
+  td:first-child{ color: var(--bone); font-weight: 500; white-space: nowrap; }
+  td:nth-child(2){ font-family: "JetBrains Mono", ui-monospace, Consolas, monospace; color: var(--dust); font-size: 12.5px; }
+  td:last-child{ color: var(--bone-dim); }
+  .table-wrap{ overflow-x: auto; }
+
+  /* ---------- footer ---------- */
+
+  footer{
+    margin-top: 88px;
+    padding-top: 22px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    justify-content: space-between;
+    gap: 16px;
+    flex-wrap: wrap;
+    font-family: "JetBrains Mono", ui-monospace, Consolas, monospace;
+    font-size: 11px;
+    color: var(--bone-faint);
+  }
+</style>
+
+<div class="doc">
+
+  <header>
+    <div class="eyebrow"><span class="dot"></span>documento de projeto · portfólio</div>
+    <h1>poeira</h1>
+    <p class="lede">Transferência de arquivo P2P efêmera entre celular e computador — sem banco de dados, sem cópia num servidor, sem sobrevida depois de entregue.</p>
+    <div class="header-meta">
+      <span class="meta-chip">etapa atual <strong>1 de 6</strong></span>
+      <span class="meta-chip">stack <strong>Node.js · WebRTC · vanilla JS</strong></span>
+      <span class="meta-chip">estado <strong>servidor de sinalização no ar</strong></span>
+    </div>
+  </header>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">01</span><h2>fluxo funcional</h2></div>
+    <div class="flow">
+      <div class="flow-step" data-n="1"><h3>QR na tela do computador</h3><p>O computador abre a página e o servidor cria uma sala com token de sessão único — o QR aponta pra essa sala, não pra um link genérico.</p></div>
+      <div class="flow-step" data-n="2"><h3>Celular escaneia</h3><p>Abre a mesma sala direto no navegador do celular. Sem instalar app.</p></div>
+      <div class="flow-step" data-n="3"><h3>Upload vira transferência P2P</h3><p>O arquivo sai do celular direto pro computador via WebRTC — o meu servidor nunca recebe o arquivo, só ajudou os dois peers a se encontrarem.</p></div>
+      <div class="flow-step" data-n="4"><h3>Redes diferentes? STUN + TURN</h3><p>Se não há caminho direto (ex: computador em rede corporativa), um relay TURN repassa os bytes sem gravá-los em nenhum momento.</p></div>
+      <div class="flow-step" data-n="5"><h3>Chega original</h3><p>Sem recompressão, sem perda de EXIF — o diferencial em relação a soluções tipo WhatsApp Web.</p></div>
+      <div class="flow-step" data-n="6"><h3>Destruir agora</h3><p>Confirmado o download, um clique dispara a dissolução em partículas — e descarta a sessão de verdade, não só visualmente.</p></div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">02</span><h2>arquitetura</h2></div>
+    <p>O ponto que sustenta a promessa de privacidade: o servidor de sinalização só troca metadado de conexão. O arquivo tem dois caminhos possíveis — nenhum dos dois passa pela minha infraestrutura de forma persistente.</p>
+
+    <figure>
+      <div class="diagram-wrap">
+        <svg viewBox="0 0 720 300" role="img" aria-label="Celular e computador trocam apenas metadado de conexão (SDP/ICE) com o servidor de sinalização; o arquivo em si viaja direto entre os dois via RTCDataChannel P2P, ou, quando isso falha, por um relay TURN que repassa bytes sem gravá-los.">
+          <defs>
+            <marker id="arrow-dust" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#5b7c99"/>
+            </marker>
+            <marker id="arrow-dim" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse">
+              <path d="M0,0 L10,5 L0,10 z" fill="#706c64"/>
+            </marker>
+          </defs>
+
+          <!-- nodes -->
+          <rect x="20" y="130" width="130" height="56" rx="3" fill="#232220" stroke="#35332f"/>
+          <text x="85" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">celular</text>
+          <text x="85" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">origin</text>
+
+          <rect x="570" y="130" width="130" height="56" rx="3" fill="#232220" stroke="#35332f"/>
+          <text x="635" y="153" text-anchor="middle" fill="#edeae4" font-size="13" font-weight="600">computador</text>
+          <text x="635" y="170" text-anchor="middle" fill="#a8a49c" font-size="10.5">dest</text>
+
+          <rect x="285" y="18" width="150" height="52" rx="3" fill="#232220" stroke="#3d5266" stroke-width="1.2"/>
+          <text x="360" y="40" text-anchor="middle" fill="#edeae4" font-size="12" font-weight="600">servidor de</text>
+          <text x="360" y="55" text-anchor="middle" fill="#edeae4" font-size="12" font-weight="600">sinalização (ws)</text>
+
+          <rect x="285" y="228" width="150" height="52" rx="3" fill="none" stroke="#706c64" stroke-width="1" stroke-dasharray="3 3"/>
+          <text x="360" y="250" text-anchor="middle" fill="#a8a49c" font-size="12" font-weight="600">relay turn</text>
+          <text x="360" y="265" text-anchor="middle" fill="#706c64" font-size="10">fallback · não grava bytes</text>
+
+          <!-- signaling lines (fino, cinza) -->
+          <line x1="130" y1="130" x2="300" y2="70" stroke="#706c64" stroke-width="1" marker-end="url(#arrow-dim)"/>
+          <line x1="420" y1="70" x2="590" y2="130" stroke="#706c64" stroke-width="1" marker-end="url(#arrow-dim)"/>
+          <text x="185" y="94" fill="#706c64" font-size="10.5">sdp / ice</text>
+          <text x="505" y="94" fill="#706c64" font-size="10.5">sdp / ice</text>
+
+          <!-- direct p2p (grosso, accent) -->
+          <line x1="150" y1="158" x2="570" y2="158" stroke="#5b7c99" stroke-width="2" marker-end="url(#arrow-dust)"/>
+          <text x="360" y="147" text-anchor="middle" fill="#5b7c99" font-size="11" font-weight="600">rtcdatachannel · p2p direto</text>
+
+          <!-- turn fallback (tracejado) -->
+          <line x1="130" y1="186" x2="300" y2="240" stroke="#706c64" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow-dim)"/>
+          <line x1="420" y1="240" x2="590" y2="186" stroke="#706c64" stroke-width="1.2" stroke-dasharray="4 3" marker-end="url(#arrow-dim)"/>
+        </svg>
+      </div>
+      <figcaption>Sinalização (fino, cinza) só troca SDP/ICE. O arquivo vai direto (accent) ou, na falha, pelo relay TURN (tracejado) — nunca pelo servidor de sinalização.</figcaption>
+    </figure>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">03</span><h2>roadmap</h2></div>
+    <div class="roadmap">
+      <div class="roadmap-row">
+        <span class="rn mono">01</span>
+        <span class="rt">Servidor de sinalização + sala/token + QR<span>WebSocket, RoomManager em memória, geração de QR server-side</span></span>
+        <span class="status done">concluído</span>
+      </div>
+      <div class="roadmap-row">
+        <span class="rn mono">02</span>
+        <span class="rt">Conexão WebRTC entre os peers<span>mesma rede primeiro, sem TURN ainda</span></span>
+        <span class="status next">próximo</span>
+      </div>
+      <div class="roadmap-row">
+        <span class="rn mono">03</span>
+        <span class="rt">Transferência via RTCDataChannel<span>chunks binários, hash de integridade, metadados originais</span></span>
+        <span class="status later">planejado</span>
+      </div>
+      <div class="roadmap-row">
+        <span class="rn mono">04</span>
+        <span class="rt">Fallback STUN/TURN<span>credenciais efêmeras já emitidas pelo servidor, falta o client usar</span></span>
+        <span class="status later">planejado</span>
+      </div>
+      <div class="roadmap-row">
+        <span class="rn mono">05</span>
+        <span class="rt">Partículas no arquivo real + descarte real<span>efeito aplicado ao conteúdo recebido, sessão destruída de fato</span></span>
+        <span class="status later">planejado</span>
+      </div>
+      <div class="roadmap-row">
+        <span class="rn mono">06</span>
+        <span class="rt">Polimento visual final<span>seguindo a direção de design já definida</span></span>
+        <span class="status later">planejado</span>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">04</span><h2>estrutura do repositório</h2></div>
+    <pre><strong>server/</strong>           servidor de sinalização (Node.js, sem framework)
+  src/
+    index.js       HTTP + WS entrypoint · rotas de sala/QR/TURN
+    rooms.js        RoomManager — estado em memória, TTL, destruição
+    signaling.js     relay de SDP/ICE entre os dois peers
+    security.js      origin check · rate limiter · validação de mensagem
+    turn.js          credenciais TURN efêmeras <em>(etapa 4)</em>
+<strong>web/</strong>              front-end estático (vanilla JS/HTML/CSS)
+  index.html        página do computador (gera sala + QR)
+  room.html         página do celular (entra pela URL /r/&lt;token&gt;)
+  assets/
+    styles.css        identidade visual
+    signaling-client.js  cliente WS fino
+<strong>preview.html</strong>      protótipo do efeito de partículas <em>(referência)</em>
+<strong>SECURITY.md</strong>       modelo de ameaças e decisões de segurança</pre>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">05</span><h2>segurança — decisões-chave</h2></div>
+    <div class="callout">
+      <ul>
+        <li><strong>Token de sala com 128 bits de entropia</strong>, TTL de 10min sem os dois peers, teto de 30min conectados — sala inútil pra quem não tem o link.</li>
+        <li><strong>Origin allowlist no handshake do WebSocket</strong> — conexão fora da lista é recusada antes do upgrade.</li>
+        <li><strong>Mensagens de sinalização validadas por schema</strong> e limitadas a 32KB — o canal fisicamente não comporta bytes de arquivo.</li>
+        <li><strong>Rate limiting por IP</strong> na criação de sala e em conexões WebSocket, mais heartbeat pra derrubar conexões mortas.</li>
+        <li><strong>Credenciais TURN efêmeras (HMAC, 5min)</strong> em vez de secret estático exposto no cliente.</li>
+      </ul>
+      <div class="callout-ref">detalhamento completo → SECURITY.md</div>
+    </div>
+  </section>
+
+  <section>
+    <div class="section-head"><span class="section-num mono">06</span><h2>decisões de stack</h2></div>
+    <div class="table-wrap">
+      <table>
+        <thead><tr><th>camada</th><th>escolha</th><th>motivo</th></tr></thead>
+        <tbody>
+          <tr><td>Sinalização</td><td>ws (Node.js)</td><td>troca só SDP/ICE — não precisa de framework, superfície de ataque pequena</td></tr>
+          <tr><td>Estado de sala</td><td>Map em memória</td><td>vida curta por natureza; sem persistência não há o que vazar</td></tr>
+          <tr><td>Transporte de arquivo</td><td>RTCDataChannel</td><td>P2P nativo do navegador, DTLS obrigatório</td></tr>
+          <tr><td>Descoberta de rede</td><td>STUN público + TURN efêmero</td><td>cobre o caso comum (mesma rede) e o caso difícil (redes distintas)</td></tr>
+          <tr><td>QR code</td><td>qrcode (server-side, SVG)</td><td>sem dependência client-side, sem CDN de terceiro na página</td></tr>
+          <tr><td>Front-end</td><td>HTML/CSS/JS vanilla</td><td>sem build step — o efeito de partículas já existe assim no protótipo</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <footer>
+    <span>poeira · documento de plano</span>
+    <span>gerado a partir do estado atual do repositório · sem persistência de dados de usuário</span>
+  </footer>
+
+</div>

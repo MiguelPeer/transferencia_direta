@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>poeira — enviar arquivo</title>
+<link rel="stylesheet" href="/assets/styles.css">
+</head>
+<body>
+
+  <div class="card">
+    <div class="eyebrow"><span class="dot" id="dot"></span><span id="eyebrowText">conectando</span></div>
+    <h1>enviar arquivo</h1>
+    <div class="sub">Este arquivo vai direto para o computador que gerou o código. Nada fica salvo neste servidor.</div>
+
+    <div class="stage" id="stage">
+      <div class="center-msg" id="centerMsg">conectando à sala…</div>
+    </div>
+
+    <div class="status-line">
+      <span id="statusText">conectando</span>
+    </div>
+
+    <div class="footnote">envio de arquivo chega na próxima etapa do projeto</div>
+  </div>
+
+<script type="module">
+import { connectSignaling } from "/assets/signaling-client.js";
+
+const dot = document.getElementById("dot");
+const eyebrowText = document.getElementById("eyebrowText");
+const centerMsg = document.getElementById("centerMsg");
+const statusText = document.getElementById("statusText");
+
+const token = location.pathname.replace(/^\/r\//, "");
+
+if (!token) {
+  statusText.textContent = "link inválido";
+  dot.classList.add("off");
+} else {
+  connectSignaling({
+    token,
+    role: "origin",
+    onOpen: () => {
+      statusText.textContent = "conectado à sala";
+    },
+    onMessage: (msg) => {
+      if (msg.type === "joined") {
+        eyebrowText.textContent = "sala " + msg.token.slice(0, 8);
+      }
+      if (msg.type === "peer-status" && msg.status === "connected") {
+        statusText.textContent = "computador conectado";
+        centerMsg.textContent = "pronto para enviar";
+      }
+      if (msg.type === "peer-status" && msg.status === "disconnected") {
+        statusText.textContent = "computador desconectado";
+        centerMsg.textContent = "aguardando computador…";
+      }
+      if (msg.type === "room-destroyed") {
+        statusText.textContent = "sala encerrada";
+        centerMsg.textContent = "esta sala não existe mais";
+        dot.classList.add("off");
+      }
+    },
+    onClose: () => {
+      dot.classList.add("off");
+      if (statusText.textContent !== "sala encerrada") {
+        statusText.textContent = "conexão perdida";
+      }
+    },
+  });
+}
+</script>
+
+</body>
+</html>
