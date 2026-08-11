@@ -277,9 +277,9 @@
     <h1>poeira</h1>
     <p class="lede">Transferência de arquivo P2P efêmera entre celular e computador — sem banco de dados, sem cópia num servidor, sem sobrevida depois de entregue.</p>
     <div class="header-meta">
-      <span class="meta-chip">etapa atual <strong>1 de 6</strong></span>
+      <span class="meta-chip">etapa atual <strong>4 de 6</strong></span>
       <span class="meta-chip">stack <strong>Node.js · WebRTC · vanilla JS</strong></span>
-      <span class="meta-chip">estado <strong>servidor de sinalização no ar</strong></span>
+      <span class="meta-chip">estado <strong>transferência p2p com hash + fallback TURN</strong></span>
     </div>
   </header>
 
@@ -357,23 +357,23 @@
       </div>
       <div class="roadmap-row">
         <span class="rn mono">02</span>
-        <span class="rt">Conexão WebRTC entre os peers<span>mesma rede primeiro, sem TURN ainda</span></span>
-        <span class="status next">próximo</span>
+        <span class="rt">Conexão WebRTC entre os peers<span>mesma rede, RTCPeerConnection + RTCDataChannel via STUN, sem TURN ainda</span></span>
+        <span class="status done">concluído</span>
       </div>
       <div class="roadmap-row">
         <span class="rn mono">03</span>
-        <span class="rt">Transferência via RTCDataChannel<span>chunks binários, hash de integridade, metadados originais</span></span>
-        <span class="status later">planejado</span>
+        <span class="rt">Transferência via RTCDataChannel<span>chunks de 16KB com backpressure, hash SHA-256, metadados originais preservados</span></span>
+        <span class="status done">concluído</span>
       </div>
       <div class="roadmap-row">
         <span class="rn mono">04</span>
-        <span class="rt">Fallback STUN/TURN<span>credenciais efêmeras já emitidas pelo servidor, falta o client usar</span></span>
-        <span class="status later">planejado</span>
+        <span class="rt">Fallback STUN/TURN<span>credenciais efêmeras (HMAC) consumidas pelo client, testado com relay forçado</span></span>
+        <span class="status done">concluído</span>
       </div>
       <div class="roadmap-row">
         <span class="rn mono">05</span>
         <span class="rt">Partículas no arquivo real + descarte real<span>efeito aplicado ao conteúdo recebido, sessão destruída de fato</span></span>
-        <span class="status later">planejado</span>
+        <span class="status next">próximo</span>
       </div>
       <div class="roadmap-row">
         <span class="rn mono">06</span>
@@ -398,6 +398,10 @@
   assets/
     styles.css        identidade visual
     signaling-client.js  cliente WS fino
+    webrtc-client.js     RTCPeerConnection + troca de SDP/ICE <em>(etapa 2)</em>
+    file-transfer.js     chunking + hash SHA-256 + reconstrucao do arquivo <em>(etapa 3)</em>
+    ice-config.js         busca credenciais TURN em /api/turn-credentials <em>(etapa 4)</em>
+    index-page.js, room-page.js   logica de cada pagina (script externo — CSP nao permite inline)
 <strong>preview.html</strong>      protótipo do efeito de partículas <em>(referência)</em>
 <strong>SECURITY.md</strong>       modelo de ameaças e decisões de segurança</pre>
   </section>
@@ -411,6 +415,7 @@
         <li><strong>Mensagens de sinalização validadas por schema</strong> e limitadas a 32KB — o canal fisicamente não comporta bytes de arquivo.</li>
         <li><strong>Rate limiting por IP</strong> na criação de sala e em conexões WebSocket, mais heartbeat pra derrubar conexões mortas.</li>
         <li><strong>Credenciais TURN efêmeras (HMAC, 5min)</strong> em vez de secret estático exposto no cliente.</li>
+        <li><strong>Hash SHA-256 fim a fim</strong> — calculado na origem antes do envio, recalculado no destino após reconstruir o arquivo; se não bater, o download é recusado.</li>
       </ul>
       <div class="callout-ref">detalhamento completo → SECURITY.md</div>
     </div>

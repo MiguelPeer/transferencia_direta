@@ -18,6 +18,18 @@
         <div class="qr" id="qrBox"></div>
         <div class="qr-label" id="qrLabel">gerando código…</div>
       </div>
+
+      <div class="transfer" id="transfer" style="display:none">
+        <div class="transfer-name" id="transferName">—</div>
+        <div class="progress-track"><div class="progress-fill" id="progressFill"></div></div>
+        <div class="transfer-pct" id="transferPct">0%</div>
+      </div>
+
+      <div class="received" id="received" style="display:none">
+        <div class="received-name" id="receivedName">—</div>
+        <div class="received-hint" id="receivedHint">integridade confirmada — hash sha-256 conferido</div>
+        <button type="button" id="downloadBtn">baixar arquivo</button>
+      </div>
     </div>
 
     <div class="meta">
@@ -32,61 +44,7 @@
     <div class="footnote">nenhum dado é salvo em servidor</div>
   </div>
 
-<script type="module">
-import { connectSignaling } from "/assets/signaling-client.js";
-
-const dot = document.getElementById("dot");
-const eyebrowText = document.getElementById("eyebrowText");
-const qrBox = document.getElementById("qrBox");
-const qrLabel = document.getElementById("qrLabel");
-const tokenLabel = document.getElementById("tokenLabel");
-const statusText = document.getElementById("statusText");
-
-async function createRoom() {
-  const res = await fetch("/api/rooms", { method: "POST" });
-  if (!res.ok) {
-    statusText.textContent = "falha ao criar sala — recarregue a página";
-    dot.classList.add("off");
-    return;
-  }
-  const room = await res.json();
-  tokenLabel.textContent = room.token.slice(0, 8);
-
-  const qrRes = await fetch(room.qrUrl);
-  const svg = await qrRes.text();
-  qrBox.innerHTML = svg;
-  qrLabel.textContent = "aponte a câmera para conectar";
-  eyebrowText.textContent = "aguardando celular";
-
-  connectSignaling({
-    token: room.token,
-    role: "dest",
-    onOpen: () => {
-      statusText.textContent = "sala ativa — aguardando conexão";
-    },
-    onMessage: (msg) => {
-      if (msg.type === "peer-status" && msg.status === "connected") {
-        statusText.textContent = "celular conectado";
-        eyebrowText.textContent = "conectado";
-      }
-      if (msg.type === "peer-status" && msg.status === "disconnected") {
-        statusText.textContent = "celular desconectado";
-        eyebrowText.textContent = "aguardando celular";
-      }
-      if (msg.type === "room-destroyed") {
-        statusText.textContent = "sala encerrada";
-        eyebrowText.textContent = "encerrada";
-        dot.classList.add("off");
-      }
-    },
-    onClose: () => {
-      dot.classList.add("off");
-    },
-  });
-}
-
-createRoom();
-</script>
+<script type="module" src="/assets/index-page.js"></script>
 
 </body>
 </html>

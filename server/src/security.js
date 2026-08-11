@@ -6,9 +6,22 @@ const allowedOrigins = (process.env.ALLOWED_ORIGINS ?? "http://localhost:8787,ht
   .map((o) => o.trim())
   .filter(Boolean);
 
+// Suporta um curinga de subdominio (ex: "https://*.loca.lt") alem do match
+// exato - pensado pra hosts de preview/tunel efemeros em dev (o nome muda a
+// cada execucao). So vale se o operador configurar isso explicitamente em
+// ALLOWED_ORIGINS; nunca usar curinga em producao.
+function originMatches(pattern, origin) {
+  if (!pattern.includes("*")) return pattern === origin;
+  const escaped = pattern
+    .split("*")
+    .map((part) => part.replace(/[.*+?^${}()|[\]\\]/g, "\\$&"))
+    .join("[^./]+");
+  return new RegExp(`^${escaped}$`).test(origin);
+}
+
 export function isOriginAllowed(origin) {
   if (!origin) return false;
-  return allowedOrigins.includes(origin);
+  return allowedOrigins.some((allowed) => originMatches(allowed, origin));
 }
 
 // Rate limiter simples em memoria (janela deslizante por IP).

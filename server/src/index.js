@@ -41,7 +41,7 @@ function applySecurityHeaders(res) {
     "Content-Security-Policy",
     "default-src 'self'; img-src 'self' data:; " +
       "style-src 'self' 'unsafe-inline' https://fonts.googleapis.com; font-src https://fonts.gstatic.com; " +
-      "connect-src 'self' ws: wss:; base-uri 'none'; form-action 'none'; object-src 'none'"
+      "connect-src 'self' ws: wss: stun: turn: turns:; base-uri 'none'; form-action 'none'; object-src 'none'"
   );
 }
 
@@ -104,7 +104,12 @@ const server = http.createServer(async (req, res) => {
 
   if (req.method === "GET" && url.pathname === "/api/turn-credentials") {
     const creds = issueTurnCredentials();
-    if (!creds) return json(res, 204, {});
+    if (!creds) {
+      // 204 nao pode ter corpo (RFC 7231) - funciona por acidente em conexao
+      // direta, mas trava atras de proxies mais rigorosos (ex: tuneis).
+      res.writeHead(204, { "Cache-Control": "no-store" });
+      return res.end();
+    }
     return json(res, 200, creds);
   }
 
