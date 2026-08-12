@@ -1,5 +1,5 @@
 // Cliente fino do WS de sinalizacao. So metadado de conexao passa por aqui -
-// nunca bytes de arquivo (isso e RTCDataChannel/P2P, etapas seguintes do roadmap).
+// nunca bytes de arquivo (isso vai direto pelo RTCDataChannel/P2P).
 export function connectSignaling({ token, role, onMessage, onOpen, onClose }) {
   const proto = location.protocol === "https:" ? "wss" : "ws";
   const ws = new WebSocket(`${proto}://${location.host}/ws?token=${encodeURIComponent(token)}&role=${role}`);

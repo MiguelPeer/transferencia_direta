@@ -1,4 +1,4 @@
-// Transferencia do arquivo pelo RTCDataChannel ja aberto (etapa 2). Chunks
+// Transferencia do arquivo pelo RTCDataChannel ja aberto. Chunks
 // binarios crus - sem passar por canvas nem recodificar - preservam os
 // bytes e metadados (EXIF etc) originais. SHA-256 calculado nas duas pontas
 // pra garantir que o arquivo chegou bit-a-bit igual.

@@ -1,8 +1,7 @@
 // Efeito de dissolucao em particulas aplicado ao arquivo real recebido - a
-// assinatura visual do projeto (etapa 5). Amostra os pixels do preview
-// (imagem ou frame atual do video) numa grade e anima cada amostra como uma
-// particula que sobe e se desfaz, tipo poeira. Baseado no prototipo em
-// preview.html, so que lendo a imagem de verdade em vez de um gradiente mock.
+// assinatura visual do projeto. Amostra os pixels do preview (imagem ou
+// frame atual do video) numa grade e anima cada amostra como uma particula
+// que sobe e se desfaz, tipo poeira.
 
 const STEP = 4; // resolucao da amostragem - menor = mais particulas, mais pesado
 const FADE_RATE = 0.012;
