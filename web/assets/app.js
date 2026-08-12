@@ -26,6 +26,7 @@ let scanner = null;
 let pendingJoinIce = null; // setado quando quem ENTROU herdou papel "origin" e ainda precisa escolher o arquivo
 let currentPreviewEl = null;
 let currentBlobUrl = null;
+let currentFileName = null;
 
 const human = (b) => (b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(1) + " MB");
 
@@ -422,19 +423,32 @@ function onFileReceived({ blob, name, mime }) {
 
   currentPreviewEl = previewEl;
   currentBlobUrl = url;
+  currentFileName = name;
 
   $("movePct").textContent = "pronto";
-  $("moveHint").textContent = "Chegou inteiro. Destrua quando não precisar mais — some dos dois lados.";
+  $("moveHint").textContent = "Chegou inteiro, íntegro. Clica em \"Guardar\" pra salvar no aparelho.";
   status("arquivo recebido", "on");
   $("doneRow").classList.remove("hide");
+  $("btnSave").disabled = false;
+  $("btnSave").textContent = "Guardar";
+  $("btnDestroy").hidden = true;
+}
 
-  // download acontece na hora - o arquivo ja esta integro e verificado
+/* ---------- guardar (baixa de verdade, so entao libera destruir) ---------- */
+$("btnSave").onclick = () => {
+  const btn = $("btnSave");
+  btn.disabled = true;
+  btn.textContent = "Guardado";
+
   const a = document.createElement("a");
-  a.href = url;
-  a.download = name;
+  a.href = currentBlobUrl;
+  a.download = currentFileName;
   a.click();
   ws.send(JSON.stringify({ type: "download-confirmed" }));
-}
+
+  $("btnDestroy").hidden = false;
+  $("moveHint").textContent = "Guardado. Destrua quando não precisar mais — some dos dois lados.";
+};
 
 /* ---------- destruir ---------- */
 $("btnDestroy").onclick = () => {
@@ -463,7 +477,6 @@ $("btnDestroy").onclick = () => {
     $("timer").textContent = "—";
   });
 };
-$("btnAgain").onclick = () => location.reload();
 
 /* ---------- entrada ---------- */
 const deepLinkToken = location.pathname.match(/^\/r\/([A-Za-z0-9_-]+)/);

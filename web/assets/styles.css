@@ -81,6 +81,16 @@ body {
 .btn-solid { background: var(--amber); border: 1px solid var(--amber); color: #10161A; }
 .btn-solid:hover { background: #F2B152; }
 .btn-solid:disabled { background: #1A2426; border-color: #1A2426; color: #5B6C6A; cursor: not-allowed; }
+.btn-save {
+  background: var(--mint);
+  border: 1px solid var(--mint);
+  color: #0A100F; /* texto escuro: contraste ~9:1 */
+  font-family: var(--body);
+  font-weight: 600;
+  font-size: 13.5px;
+}
+.btn-save:hover { background: #74E0BB; border-color: #74E0BB; }
+.btn-save:disabled { background: #1A2426; border-color: #1A2426; color: #5B6C6A; cursor: not-allowed; }
 .row { display: flex; gap: 10px; margin-top: 16px; flex-wrap: wrap; }
 .row .btn { padding: 13px 18px; }
 
