@@ -409,6 +409,10 @@ function connectWs(iceServers, { isJoiner }) {
           status("conexão encerrada — salve agora", "wait");
           $("moveHint").textContent =
             "A conexão encerrou, mas o arquivo já chegou inteiro. Clica em \"Guardar\" agora — essa cópia some quando você fechar esta aba.";
+        } else if (myRole === "origin" && msg.reason === "destroyed_by_user" && files.length > 0) {
+          // o outro lado guardou e destruiu de proposito - o remetente ganha
+          // o mesmo momento de fechamento visual que quem recebeu ja tem.
+          dissolveSentStage();
         } else {
           status("sala encerrada");
         }
@@ -477,6 +481,23 @@ function updateProgress(sent, total) {
   const pct = total > 0 ? Math.round((sent / total) * 100) : 0;
   $("barFill").style.width = pct + "%";
   $("movePct").textContent = pct + "%";
+}
+
+// papel origin: o outro lado guardou e destruiu de proposito - dissolve a
+// linha do arquivo enviado (sem preview real pra amostrar, dissolve.js cai
+// pro preenchimento solido - ainda assim da o mesmo fechamento visual que
+// quem recebeu ja tinha).
+function dissolveSentStage() {
+  const stage = $("stage"), moveRow = $("moveRow"), dust = $("stageDust");
+  const w = stage.clientWidth, h = stage.clientHeight;
+  const particles = buildParticles(moveRow, w, h);
+  moveRow.classList.add("fade-out");
+  dust.classList.remove("hide");
+  runDissolve(dust, particles, w, h, () => {
+    stage.classList.add("hide");
+    status("sala encerrada");
+    $("moveHint").textContent = "Destruído do outro lado. Não existe cópia em lugar nenhum.";
+  });
 }
 
 function addReceivedFile({ blob, name, mime }) {

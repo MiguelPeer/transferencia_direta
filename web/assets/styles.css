@@ -145,6 +145,7 @@ body {
 .bar { height: 3px; background: #16211F; border-radius: 2px; overflow: hidden; margin-top: 16px; }
 .bar i { display: block; height: 100%; width: 0; background: var(--mint); transition: width .25s linear; }
 .stage { position: relative; border-radius: 10px; overflow: hidden; }
+.stage-dust { position: absolute; inset: 0; width: 100%; height: 100%; pointer-events: none; }
 .fade-out { opacity: 0; transition: opacity .5s; }
 
 /* grade de miniaturas dos arquivos recebidos */

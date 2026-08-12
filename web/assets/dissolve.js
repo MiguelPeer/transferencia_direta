@@ -30,7 +30,7 @@ export function buildParticles(source, width, height) {
   if (sw > 0 && sh > 0) {
     drawCover(octx, source, sw, sh, width, height);
   } else {
-    octx.fillStyle = "#5b7c99"; // sem frame decodificado - ainda da pra dissolver algo
+    octx.fillStyle = "#5FD3AB"; // sem frame decodificado (ex: cartao generico de arquivo) - ainda da pra dissolver algo
     octx.fillRect(0, 0, width, height);
   }
 
