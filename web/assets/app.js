@@ -16,17 +16,18 @@ const $ = (id) => document.getElementById(id);
 const reduce = matchMedia("(prefers-reduced-motion: reduce)").matches;
 const SIGNAL_TYPES = new Set(["offer", "answer", "ice-candidate"]);
 
+const MAX_FILES = 5;
+
 let token = null;
 let myRole = null; // "origin" (envia) | "dest" (recebe) - papel deste aparelho
-let file = null; // arquivo escolhido, papel origin, antes de a sala existir
+let files = []; // arquivos escolhidos, papel origin, antes de a sala existir (max MAX_FILES)
 let ws = null;
 let peer = null;
 let timerId = null;
 let scanner = null;
-let pendingJoinIce = null; // setado quando quem ENTROU herdou papel "origin" e ainda precisa escolher o arquivo
-let currentPreviewEl = null;
-let currentBlobUrl = null;
-let currentFileName = null;
+let pendingJoinIce = null; // setado quando quem ENTROU herdou papel "origin" e ainda precisa escolher os arquivos
+let receivedFiles = []; // papel dest: {blob, name, url, thumbEl, dustEl} de cada arquivo recebido, na ordem
+let expectedTotal = 1; // quantos arquivos o lote atual deve ter, avisado no meta do primeiro
 
 const human = (b) => (b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(1) + " MB");
 
@@ -128,8 +129,8 @@ async function publish() {
 $("goSend").onclick = () => openRoom("send");
 $("goRecv").onclick = () => openRoom("recv");
 
-/* ---------- arquivo (papel origin) ---------- */
-const drop = $("drop"), fileInput = $("fileInput");
+/* ---------- arquivos (papel origin) - ate MAX_FILES por vez ---------- */
+const drop = $("drop"), fileInput = $("fileInput"), fileList = $("fileList");
 drop.onclick = () => fileInput.click();
 drop.onkeydown = (e) => {
   if (e.key === "Enter" || e.key === " ") {
@@ -149,18 +150,53 @@ drop.onkeydown = (e) => {
     drop.classList.remove("over");
   })
 );
-drop.addEventListener("drop", (e) => e.dataTransfer.files[0] && takeFile(e.dataTransfer.files[0]));
-fileInput.onchange = (e) => e.target.files[0] && takeFile(e.target.files[0]);
+drop.addEventListener("drop", (e) => e.dataTransfer.files.length && takeFiles(e.dataTransfer.files));
+fileInput.onchange = (e) => e.target.files.length && takeFiles(e.target.files);
 
-function takeFile(f) {
-  file = f;
-  $("fileName").textContent = f.name;
-  $("fileSize").textContent = human(f.size) + " · original preservado";
+function renderFileList() {
+  fileList.innerHTML = "";
+  files.forEach((f, i) => {
+    const row = document.createElement("div");
+    row.className = "file-row";
+    row.innerHTML = `
+      <span class="file-glyph"><i></i></span>
+      <span class="file-meta"><strong></strong><span></span></span>
+      <button class="file-x" type="button">remover</button>
+    `;
+    row.querySelector(".file-meta strong").textContent = f.name;
+    row.querySelector(".file-meta span").textContent = human(f.size) + " · original preservado";
+    row.querySelector(".file-x").onclick = () => removeFile(i);
+    fileList.appendChild(row);
+  });
+}
+
+function removeFile(idx) {
+  files.splice(idx, 1);
+  if (files.length === 0) {
+    fileList.classList.add("hide");
+    drop.classList.remove("hide");
+    $("roomBox").classList.add("hide");
+    clearInterval(timerId);
+    $("timer").textContent = "—";
+    status("escolha um arquivo para abrir a sala");
+    return;
+  }
+  renderFileList();
+}
+
+function takeFiles(selected) {
+  const picked = Array.from(selected).slice(0, MAX_FILES);
+  files = picked;
+  renderFileList();
   drop.classList.add("hide");
-  $("fileRow").classList.remove("hide");
+  fileList.classList.remove("hide");
+
+  if (selected.length > MAX_FILES) {
+    toast(`só os primeiros ${MAX_FILES} arquivos foram usados`);
+  }
 
   if (pendingJoinIce) {
-    // quem ENTROU e herdou o papel "origin" so precisava do arquivo -
+    // quem ENTROU e herdou o papel "origin" so precisava dos arquivos -
     // a sala ja existe, e so conectar.
     const iceServers = pendingJoinIce;
     pendingJoinIce = null;
@@ -173,16 +209,6 @@ function takeFile(f) {
     publish();
   }
 }
-$("fileClear").onclick = () => {
-  file = null;
-  fileInput.value = "";
-  $("fileRow").classList.add("hide");
-  drop.classList.remove("hide");
-  $("roomBox").classList.add("hide");
-  clearInterval(timerId);
-  $("timer").textContent = "—";
-  status("escolha um arquivo para abrir a sala");
-};
 $("btnCopy").onclick = async () => {
   const room = $("codeOut").textContent.replace(/\s/g, "");
   if (!room) return;
@@ -374,11 +400,17 @@ function setupDataChannel(channel) {
     channel.addEventListener("open", async () => {
       show("s5");
       setLive(true);
-      $("moveName").textContent = file.name;
-      $("moveSize").textContent = human(file.size) + " · original preservado";
       status("enviando arquivo…", "wait");
       try {
-        await sendFile(channel, file, { onProgress: updateProgress });
+        for (let i = 0; i < files.length; i++) {
+          const f = files[i];
+          $("moveName").textContent = f.name;
+          $("moveSize").textContent = human(f.size) + (files.length > 1 ? ` · arquivo ${i + 1} de ${files.length}` : " · original preservado");
+          $("movePct").textContent = "0%";
+          $("barFill").style.width = "0%";
+          status(files.length > 1 ? `enviando arquivo ${i + 1}/${files.length}…` : "enviando arquivo…", "wait");
+          await sendFile(channel, f, { onProgress: updateProgress, index: i + 1, total: files.length });
+        }
         status("arquivo enviado — aguardando confirmação", "on");
         $("moveHint").textContent = "Assim que o outro lado destruir, some dos dois aparelhos.";
       } catch (err) {
@@ -391,13 +423,16 @@ function setupDataChannel(channel) {
       onMeta: (meta) => {
         show("s5");
         setLive(true);
+        $("stage").classList.remove("hide");
+        expectedTotal = meta.total ?? 1;
+        const idx = meta.index ?? receivedFiles.length + 1;
         $("moveName").textContent = meta.name;
-        $("moveSize").textContent = human(meta.size) + " · original preservado";
+        $("moveSize").textContent = human(meta.size) + (expectedTotal > 1 ? ` · arquivo ${idx} de ${expectedTotal}` : " · original preservado");
         updateProgress(0, meta.size);
-        status("recebendo arquivo…", "wait");
+        status(expectedTotal > 1 ? `recebendo arquivo ${idx}/${expectedTotal}…` : "recebendo arquivo…", "wait");
       },
       onProgress: updateProgress,
-      onComplete: onFileReceived,
+      onComplete: addReceivedFile,
       onError: (reason) => {
         status(reason === "integrity_mismatch" ? "falha de integridade — arquivo corrompido" : "falha ao receber arquivo");
         $("moveHint").textContent = reason === "integrity_mismatch" ? "o hash recebido não confere — peça pra enviar de novo" : reason;
@@ -413,21 +448,41 @@ function updateProgress(sent, total) {
   $("movePct").textContent = pct + "%";
 }
 
-function onFileReceived({ blob, name, mime }) {
+function addReceivedFile({ blob, name, mime }) {
   const url = URL.createObjectURL(blob);
   const isVideo = mime.startsWith("video/");
-  const previewEl = isVideo ? $("previewVideo") : $("previewImg");
-  previewEl.src = url;
-  previewEl.classList.remove("hide");
-  (isVideo ? $("previewImg") : $("previewVideo")).classList.add("hide");
 
-  currentPreviewEl = previewEl;
-  currentBlobUrl = url;
-  currentFileName = name;
+  const thumb = document.createElement("div");
+  thumb.className = "thumb";
+  const mediaEl = document.createElement(isVideo ? "video" : "img");
+  mediaEl.className = "thumb-media";
+  mediaEl.src = url;
+  if (isVideo) {
+    mediaEl.muted = true;
+    mediaEl.playsInline = true;
+  }
+  const dustEl = document.createElement("canvas");
+  dustEl.className = "thumb-dust hide";
+  const nameEl = document.createElement("span");
+  nameEl.className = "thumb-name";
+  nameEl.textContent = name;
+  thumb.append(mediaEl, dustEl, nameEl);
+  $("thumbGrid").appendChild(thumb);
+  $("thumbGrid").classList.remove("hide");
 
-  $("movePct").textContent = "pronto";
-  $("moveHint").textContent = "Chegou inteiro, íntegro. Clica em \"Guardar\" pra salvar no aparelho.";
+  receivedFiles.push({ blob, name, mime, url, thumb, mediaEl, dustEl });
+
+  if (receivedFiles.length < expectedTotal) {
+    status(`arquivo recebido — ${receivedFiles.length}/${expectedTotal}`, "wait");
+    return;
+  }
+
+  $("stage").classList.add("hide");
   status("arquivo recebido", "on");
+  $("moveHint").textContent =
+    receivedFiles.length > 1
+      ? "Chegaram inteiros, íntegros. Clica em \"Guardar\" pra salvar no aparelho."
+      : "Chegou inteiro, íntegro. Clica em \"Guardar\" pra salvar no aparelho.";
   $("doneRow").classList.remove("hide");
   $("btnSave").disabled = false;
   $("btnSave").textContent = "Guardar";
@@ -440,35 +495,39 @@ $("btnSave").onclick = () => {
   btn.disabled = true;
   btn.textContent = "Guardado";
 
-  const a = document.createElement("a");
-  a.href = currentBlobUrl;
-  a.download = currentFileName;
-  a.click();
+  receivedFiles.forEach(({ url, name }) => {
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = name;
+    a.click();
+  });
   ws.send(JSON.stringify({ type: "download-confirmed" }));
 
   $("btnDestroy").hidden = false;
-  $("moveHint").textContent = "Guardado. Destrua quando não precisar mais — some dos dois lados.";
+  $("moveHint").textContent =
+    receivedFiles.length > 1 ? "Guardados. Destrua quando não precisar mais — some dos dois lados." : "Guardado. Destrua quando não precisar mais — some dos dois lados.";
 };
 
-/* ---------- destruir ---------- */
+/* ---------- destruir (dissolve paralelo de cada miniatura) ---------- */
 $("btnDestroy").onclick = () => {
   const btn = $("btnDestroy");
   btn.disabled = true;
-  const stage = $("stage"), dust = $("dust"), moveRow = $("moveRow");
-  const w = stage.clientWidth, h = stage.clientHeight;
-  const particles = buildParticles(currentPreviewEl, w, h);
 
-  currentPreviewEl.classList.add("hide");
-  moveRow.classList.add("fade-out");
-  dust.classList.remove("hide");
+  const dissolves = receivedFiles.map(({ mediaEl, dustEl, thumb }) => {
+    const w = thumb.clientWidth, h = thumb.clientHeight;
+    const particles = buildParticles(mediaEl, w, h);
+    mediaEl.classList.add("hide");
+    dustEl.classList.remove("hide");
+    return new Promise((resolve) => runDissolve(dustEl, particles, w, h, resolve));
+  });
 
-  runDissolve(dust, particles, w, h, () => {
+  Promise.all(dissolves).then(() => {
     ws.send(JSON.stringify({ type: "destroy" }));
-    URL.revokeObjectURL(currentBlobUrl);
-    currentPreviewEl.removeAttribute("src");
-    dust.getContext("2d").clearRect(0, 0, dust.width, dust.height);
-    moveRow.classList.add("hide");
-    $("barFill").style.width = "0%";
+    receivedFiles.forEach(({ url }) => URL.revokeObjectURL(url));
+    receivedFiles = [];
+    $("thumbGrid").innerHTML = "";
+    $("thumbGrid").classList.add("hide");
+    $("doneRow").classList.add("hide");
     $("moveHint").textContent = "Destruído. Não existe cópia em lugar nenhum.";
     setLive(false);
     ports("linha encerrada", "desconectado");

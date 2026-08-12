@@ -63,16 +63,12 @@
         <button class="back" data-back>&larr; voltar</button>
 
         <div id="sendFile">
-          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivo">
-            <p>Arraste o arquivo aqui ou clique para escolher</p>
-            <small>vai inteiro, do jeito que saiu da câmera</small>
+          <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivos">
+            <p>Arraste até 5 arquivos aqui ou clique para escolher</p>
+            <small>vão inteiros, do jeito que saíram da câmera</small>
           </div>
-          <input type="file" id="fileInput" class="hide" accept="image/*,video/*">
-          <div class="file-row hide" id="fileRow">
-            <span class="file-glyph"><i></i></span>
-            <span class="file-meta"><strong id="fileName">—</strong><span id="fileSize">—</span></span>
-            <button class="file-x" id="fileClear">trocar</button>
-          </div>
+          <input type="file" id="fileInput" class="hide" accept="image/*,video/*" multiple>
+          <div class="file-list hide" id="fileList"></div>
         </div>
 
         <div id="roomBox" class="hide">
@@ -124,16 +120,14 @@
       <section id="s5" class="hide">
         <button class="back" data-back>&larr; voltar</button>
         <div class="stage" id="stage">
-          <img id="previewImg" class="preview-media hide" alt="">
-          <video id="previewVideo" class="preview-media hide" muted playsinline controls></video>
           <div class="file-row" id="moveRow" style="margin-bottom:0">
             <span class="file-glyph"><i></i></span>
             <span class="file-meta"><strong id="moveName">—</strong><span id="moveSize">—</span></span>
             <span class="file-x" id="movePct" style="color:var(--mint)">0%</span>
           </div>
           <div class="bar"><i id="barFill"></i></div>
-          <canvas class="dust hide" id="dust"></canvas>
         </div>
+        <div class="thumb-grid hide" id="thumbGrid"></div>
         <div class="row hide" id="doneRow">
           <button class="btn btn-save" id="btnSave">Guardar</button>
           <button class="btn btn-ghost" id="btnDestroy" hidden>Destruir</button>

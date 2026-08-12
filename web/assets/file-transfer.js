@@ -23,7 +23,7 @@ async function sha256Hex(buffer) {
   return [...new Uint8Array(digest)].map((b) => b.toString(16).padStart(2, "0")).join("");
 }
 
-export async function sendFile(channel, file, { onProgress } = {}) {
+export async function sendFile(channel, file, { onProgress, index, total } = {}) {
   const buffer = await file.arrayBuffer();
   const sha256 = await sha256Hex(buffer);
 
@@ -34,6 +34,10 @@ export async function sendFile(channel, file, { onProgress } = {}) {
       size: buffer.byteLength,
       mime: file.type || "application/octet-stream",
       sha256,
+      // index/total sao opcionais - so usados quando um lote de varios
+      // arquivos e enviado em sequencia, pro receptor saber quantos faltam
+      index,
+      total,
     })
   );
 
@@ -71,7 +75,7 @@ export function createFileReceiver({ onMeta, onProgress, onComplete, onError }) 
         onError?.("integrity_mismatch");
         return;
       }
-      onComplete?.({ blob, name: meta.name, mime: meta.mime, size: meta.size });
+      onComplete?.({ blob, name: meta.name, mime: meta.mime, size: meta.size, index: meta.index, total: meta.total });
     } catch (err) {
       onError?.(err.message ?? "erro desconhecido ao reconstruir arquivo");
     }
