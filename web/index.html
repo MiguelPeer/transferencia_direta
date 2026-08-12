@@ -23,7 +23,7 @@
       <circle class="jack-ring" cx="176" cy="64" r="9"/><circle class="jack-core" cx="176" cy="64" r="3.5"/>
       <rect class="port-box" x="424" y="30" width="168" height="68" rx="10" stroke-width="1"/>
       <text class="port-label" x="442" y="55">outro lado</text>
-      <text class="port-name" id="portB" x="442" y="76">não conectado</text>
+      <text class="port-name" id="portB" x="442" y="76">aguardando</text>
       <circle class="jack-ring" cx="424" cy="64" r="9"/><circle class="jack-core" cx="424" cy="64" r="3.5"/>
       <path id="cable" d="M 185 64 Q 305 106 415 64"/>
       <circle id="pulse" r="3.5" fill="#5FD3AB"/>
@@ -65,7 +65,7 @@
         <div id="sendFile">
           <div class="drop" id="drop" tabindex="0" role="button" aria-label="Escolher arquivos">
             <p>Arraste até 5 arquivos aqui ou clique para escolher</p>
-            <small>foto, vídeo, PDF ou qualquer outro tipo — vai inteiro, sem compressão</small>
+            <small>foto, vídeo, PDF ou qualquer outro tipo — vai inteiro, sem compressão. Limitado só pela memória do aparelho</small>
           </div>
           <input type="file" id="fileInput" class="hide" multiple>
           <div class="file-list hide" id="fileList"></div>
@@ -77,7 +77,7 @@
             <div class="qrcard" id="qrCard"><div id="qrBox"></div></div>
             <div class="joinside">
               <strong>Tem câmera? Aponte.</strong>
-              <p>Abra a câmera do celular no QR. Sem câmera, digite o código no outro aparelho.</p>
+              <p>Abra a câmera do celular no QR. Sem câmera, é só abrir o site no outro aparelho, tocar em "Entrar com o código" e digitar o código ao lado.</p>
               <div class="code-shell">
                 <div class="code" id="codeOut">— — — — — —</div>
                 <button class="btn btn-ghost" id="btnCopy">Copiar</button>
@@ -103,7 +103,7 @@
           <button class="btn btn-ghost" id="btnPaste">Colar</button>
           <button class="btn btn-solid" id="btnConnect" disabled>Entrar na sala</button>
         </div>
-        <p class="hint" id="s3hint">O código aparece na tela de quem abriu a sala. Vale por 10 minutos.</p>
+        <p class="hint" id="s3hint">6 letras e números (sem 0, O, 1 ou I). Aparece na tela de quem abriu a sala. Vale por 10 minutos.</p>
       </section>
 
       <!-- ============ TELA 4: scanner ============ -->
@@ -130,7 +130,7 @@
         <div class="thumb-grid hide" id="thumbGrid"></div>
         <div class="row hide" id="doneRow">
           <button class="btn btn-save" id="btnSave">Guardar</button>
-          <button class="btn btn-ghost" id="btnDestroy" hidden>Destruir</button>
+          <button class="btn btn-ghost" id="btnDestroy" hidden>Sumir com a cópia</button>
         </div>
         <p class="hint" id="moveHint">Os dados vão direto de um aparelho para o outro.</p>
       </section>

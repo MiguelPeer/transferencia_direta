@@ -401,6 +401,7 @@ function setupDataChannel(channel) {
       show("s5");
       setLive(true);
       status("enviando arquivo…", "wait");
+      $("moveHint").textContent = "Mantenha esta aba aberta nos dois aparelhos até terminar — trocar de app ou bloquear a tela pode cortar a conexão.";
       try {
         for (let i = 0; i < files.length; i++) {
           const f = files[i];
@@ -430,6 +431,7 @@ function setupDataChannel(channel) {
         $("moveSize").textContent = human(meta.size) + (expectedTotal > 1 ? ` · arquivo ${idx} de ${expectedTotal}` : " · original preservado");
         updateProgress(0, meta.size);
         status(expectedTotal > 1 ? `recebendo arquivo ${idx}/${expectedTotal}…` : "recebendo arquivo…", "wait");
+        $("moveHint").textContent = "Mantenha esta aba aberta nos dois aparelhos até terminar — trocar de app ou bloquear a tela pode cortar a conexão.";
       },
       onProgress: updateProgress,
       onComplete: addReceivedFile,
@@ -520,7 +522,7 @@ $("btnSave").onclick = () => {
 
   $("btnDestroy").hidden = false;
   $("moveHint").textContent =
-    receivedFiles.length > 1 ? "Guardados. Destrua quando não precisar mais — some dos dois lados." : "Guardado. Destrua quando não precisar mais — some dos dois lados.";
+    "Guardado no aparelho. \"Sumir com a cópia\" apaga só esta transferência dos dois lados — o que você salvou continua com você.";
 };
 
 /* ---------- destruir (dissolve paralelo de cada miniatura) ---------- */
