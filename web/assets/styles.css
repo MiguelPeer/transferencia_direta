@@ -173,7 +173,7 @@ body {
   .intent { grid-template-columns: 1fr; }
   .join { grid-template-columns: 1fr; justify-items: center; text-align: center; }
   .joinside { width: 100%; }
-  .code { font-size: 21px; letter-spacing: .18em; text-align: center; }
-  .code-shell { justify-content: center; }
+  .code { font-size: 21px; letter-spacing: .18em; text-align: center; width: 100%; flex: none; }
+  .code-shell { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { *{ animation: none !important; transition-duration: .01ms !important; } }
