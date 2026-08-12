@@ -127,7 +127,7 @@ const server = http.createServer(async (req, res) => {
   }
 
   if (req.method === "GET" && url.pathname === "/api/turn-credentials") {
-    const creds = issueTurnCredentials();
+    const creds = await issueTurnCredentials();
     if (!creds) {
       // 204 nao pode ter corpo (RFC 7231) - funciona por acidente em conexao
       // direta, mas trava atras de proxies mais rigorosos (ex: tuneis).
