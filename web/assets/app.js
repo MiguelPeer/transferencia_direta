@@ -451,15 +451,30 @@ function updateProgress(sent, total) {
 function addReceivedFile({ blob, name, mime }) {
   const url = URL.createObjectURL(blob);
   const isVideo = mime.startsWith("video/");
+  const isImage = mime.startsWith("image/");
 
   const thumb = document.createElement("div");
   thumb.className = "thumb";
-  const mediaEl = document.createElement(isVideo ? "video" : "img");
-  mediaEl.className = "thumb-media";
-  mediaEl.src = url;
-  if (isVideo) {
-    mediaEl.muted = true;
-    mediaEl.playsInline = true;
+  let mediaEl;
+  if (isImage || isVideo) {
+    mediaEl = document.createElement(isVideo ? "video" : "img");
+    mediaEl.className = "thumb-media";
+    mediaEl.src = url;
+    if (isVideo) {
+      mediaEl.muted = true;
+      mediaEl.playsInline = true;
+    }
+  } else {
+    // sem preview de pixel real (nao e imagem/video) - cartao generico com a
+    // extensao. dissolve.js ja cai pro preenchimento solido de cor quando o
+    // elemento nao tem naturalWidth/videoWidth, entao a dissolucao ainda roda.
+    mediaEl = document.createElement("div");
+    mediaEl.className = "thumb-media thumb-file";
+    const icon = document.createElement("i");
+    const label = document.createElement("span");
+    const ext = name.includes(".") ? name.split(".").pop() : "arquivo";
+    label.textContent = ext.slice(0, 4).toUpperCase();
+    mediaEl.append(icon, label);
   }
   const dustEl = document.createElement("canvas");
   dustEl.className = "thumb-dust hide";
