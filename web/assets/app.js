@@ -28,6 +28,7 @@ let scanner = null;
 let pendingJoinIce = null; // setado quando quem ENTROU herdou papel "origin" e ainda precisa escolher os arquivos
 let receivedFiles = []; // papel dest: {blob, name, url, thumbEl, dustEl} de cada arquivo recebido, na ordem
 let expectedTotal = 1; // quantos arquivos o lote atual deve ter, avisado no meta do primeiro
+let downloadConfirmed = false; // papel dest: true so depois que "Guardar" foi clicado de verdade
 
 const human = (b) => (b < 1024 ? b + " B" : b < 1048576 ? (b / 1024).toFixed(1) + " KB" : (b / 1048576).toFixed(1) + " MB");
 
@@ -342,6 +343,13 @@ async function beginJoin(tok, role) {
 }
 
 /* ---------- sinalizacao + webrtc (comum a quem abre e a quem entra) ---------- */
+// a sala pode ja ter sido encerrada (pelo outro lado, por TTL, etc) quando o
+// usuario ainda clica em guardar/destruir por aqui - manda so se o socket
+// ainda estiver de pe, pra nao estourar em cima de um ws ja fechado.
+function safeSend(msg) {
+  if (ws && ws.readyState === WebSocket.OPEN) ws.send(JSON.stringify(msg));
+}
+
 function connectWs(iceServers, { isJoiner }) {
   ws = connectSignaling({
     token,
@@ -380,9 +388,30 @@ function connectWs(iceServers, { isJoiner }) {
       if (msg.type === "room-destroyed") {
         setLive(false);
         ports("linha encerrada", "desconectado");
-        status("sala encerrada");
         clearInterval(timerId);
         $("timer").textContent = "—";
+
+        if (myRole === "dest" && receivedFiles.length > 0 && downloadConfirmed) {
+          // ja guardou - a copia em memoria pode sumir com seguranca, igual
+          // ao clique manual em "sumir com a copia" (sem a animacao, esse
+          // encerramento nao foi um gesto deliberado do usuario aqui).
+          receivedFiles.forEach(({ url }) => URL.revokeObjectURL(url));
+          receivedFiles = [];
+          $("thumbGrid").innerHTML = "";
+          $("thumbGrid").classList.add("hide");
+          $("doneRow").classList.add("hide");
+          status("sala encerrada");
+          $("moveHint").textContent = "Sala encerrada. A cópia local foi apagada — o que você salvou continua com você.";
+        } else if (myRole === "dest" && receivedFiles.length > 0) {
+          // chegou, mas ainda nao guardou - mantem o blob vivo, so avisa.
+          // limpar aqui faria uma transferencia bem-sucedida virar perda de
+          // arquivo por causa do encerramento automatico.
+          status("conexão encerrada — salve agora", "wait");
+          $("moveHint").textContent =
+            "A conexão encerrou, mas o arquivo já chegou inteiro. Clica em \"Guardar\" agora — essa cópia some quando você fechar esta aba.";
+        } else {
+          status("sala encerrada");
+        }
       }
     },
     onClose: () => {},
@@ -518,7 +547,8 @@ $("btnSave").onclick = () => {
     a.download = name;
     a.click();
   });
-  ws.send(JSON.stringify({ type: "download-confirmed" }));
+  downloadConfirmed = true;
+  safeSend({ type: "download-confirmed" });
 
   $("btnDestroy").hidden = false;
   $("moveHint").textContent =
@@ -539,7 +569,7 @@ $("btnDestroy").onclick = () => {
   });
 
   Promise.all(dissolves).then(() => {
-    ws.send(JSON.stringify({ type: "destroy" }));
+    safeSend({ type: "destroy" });
     receivedFiles.forEach(({ url }) => URL.revokeObjectURL(url));
     receivedFiles = [];
     $("thumbGrid").innerHTML = "";
@@ -553,6 +583,14 @@ $("btnDestroy").onclick = () => {
     $("timer").textContent = "—";
   });
 };
+
+/* ---------- soltar blobs se a aba fechar com arquivo recebido pendente ---------- */
+// fechar a aba ja libera a memoria sozinho - isso aqui e so higiene pro caso
+// de navegacao/recarregamento sem fechar de fato (o valor real da limpeza
+// esta no caminho em-sessao, tratado no "room-destroyed" acima).
+addEventListener("pagehide", () => {
+  receivedFiles.forEach(({ url }) => URL.revokeObjectURL(url));
+});
 
 /* ---------- entrada ---------- */
 const deepLinkToken = location.pathname.match(/^\/r\/([A-Za-z0-9_-]+)/);
